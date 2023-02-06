@@ -1,4 +1,2 @@
-# Unity 
-
-[![Build 😎](https://github.com/InfiniBrains/UnityBoilerplate/actions/workflows/main.yml/badge.svg)](https://github.com/InfiniBrains/MedicalImageViewer/actions/workflows/main.yml)
-
+The project is a flow field simulation, where all the units pathfind to the goal cell using the flow fields which manipulate their velocity.
+The goal cell randomizes to a new cell position about every ten seconds.
