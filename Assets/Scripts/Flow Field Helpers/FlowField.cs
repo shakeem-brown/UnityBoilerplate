@@ -4,33 +4,33 @@ using UnityEngine;
 
 public class FlowField
 {
-	public Cell[,] mGrid {get; private set;}
-	public Vector2Int mGridSize {get; private set;}
-	public Vector2Int mGridOffset { get; private set; }
-	public float mCellRadius {get; private set;}
-	public Cell mDestinationCell; // the goal cell
-	private float mCellDiameter;
+	public Cell[,] grid { get; private set; }
+	public Vector2Int gridSize { get; private set; }
+	public Vector2Int gridOffset { get; private set; }
+	public float cellRadius { get; private set; }
+	public float cellDiameter { get; private set; }
+	public Cell destinationCell { get; private set; }
 	
-	public FlowField(Vector2Int gridSize, Vector2Int gridOffset, float cellRadius)
+	public FlowField(Vector2Int size, Vector2Int offset, float radius)
 	{
-		mGridSize = gridSize;
-		mGridOffset = gridOffset;
-		mCellRadius = cellRadius;
-		mCellDiameter = mCellRadius * 2.0f;
+		gridSize = size;
+		gridOffset = offset;
+		cellRadius = radius;
+		cellDiameter = cellRadius + cellRadius;
 	}
 	
 	// generates the grid where the 3 fields are being generated on
 	public void GenerateGrid()
 	{
-		mGrid = new Cell[mGridSize.x, mGridSize.y];
-		for (int x = 0; x < mGridSize.x; x++)
+		grid = new Cell[gridSize.x, gridSize.y];
+		for (int x = 0; x < gridSize.x; x++)
 		{
-			for (int y = 0; y < mGridSize.y; y++)
+			for (int y = 0; y < gridSize.y; y++)
 			{
-				float worldXPos = mCellDiameter * (x + mGridOffset.x) + mCellRadius;
-				float worldZPos = mCellDiameter * (y + mGridOffset.y) + mCellRadius;
+				float worldXPos = cellDiameter * (x + gridOffset.x) + cellRadius;
+				float worldZPos = cellDiameter * (y + gridOffset.y) + cellRadius;
 				Vector3 worldPosition = new Vector3(worldXPos, 0, worldZPos);
-				mGrid[x, y] = new Cell(worldPosition, new Vector2Int(x, y));
+				grid[x, y] = new Cell(worldPosition, new Vector2Int(x, y));
 			}
 		}
 	}
@@ -40,9 +40,9 @@ public class FlowField
 	// terrain cannot have 0 cost as it will be mistaken as the destination cell
 	public void GenerateCostField()
 	{
-		//Vector3 cellHalfExtents = Vector3.one * mCellRadius;
+		//Vector3 cellHalfExtents = Vector3.one * cellRadius;
 		//int terrainMask = LayerMask.GetMask("Impassible", "Rough");
-		//foreach (Cell currentCell in mGrid)
+		//foreach (Cell currentCell in grid)
 		//{
 		//	Collider[] terrain = Physics.OverlapBox(currentCell.mWorldPosition, cellHalfExtents, Quaternion.identity, terrainMask);
 		//	bool isIncreaseCost = false;
@@ -64,25 +64,25 @@ public class FlowField
 	
 	// generates the cost for each cell towards the destination cell where cells that are closer
 	// to the destination are lower then others further away from the destination
-	public void GenerateIntergrationField(Cell destinationCell)
+	public void GenerateIntergrationField(Cell goalCell)
 	{
-		mDestinationCell = destinationCell;
-		mDestinationCell.mCost = 0;
-		mDestinationCell.mBestCost = 0;
+		destinationCell = goalCell;
+		destinationCell.cost = 0;
+		destinationCell.bestCost = 0;
 		
 		Queue<Cell> cellsToCheck = new Queue<Cell>();
-		cellsToCheck.Enqueue(mDestinationCell);
+		cellsToCheck.Enqueue(destinationCell);
 		
 		while (cellsToCheck.Count > 0)
 		{
 			Cell currentCell = cellsToCheck.Dequeue();
-			List<Cell> currentNeighbors = GetNeighborCells(currentCell.mGridIndex, GridDirection.CardinalDirections);
+			List<Cell> currentNeighbors = GetNeighborCells(currentCell);
 			foreach (Cell currentNeighbor in currentNeighbors)
 			{
-				if (currentNeighbor.mCost == byte.MaxValue) continue;
-				if (currentNeighbor.mCost + currentCell.mBestCost < currentNeighbor.mBestCost)
+				if (currentNeighbor.cost == byte.MaxValue) continue;
+				if (currentNeighbor.cost + currentCell.bestCost < currentNeighbor.bestCost)
 				{
-					currentNeighbor.mBestCost = (ushort)(currentNeighbor.mCost + currentCell.mBestCost);
+					currentNeighbor.bestCost = (ushort)(currentNeighbor.cost + currentCell.bestCost);
 					cellsToCheck.Enqueue(currentNeighbor);
 				}
 			}
@@ -92,49 +92,90 @@ public class FlowField
 	// generates the best direction to the destination based of the intergration field cost calculations
 	public void GenerateFlowField() 
 	{
-		foreach (Cell currentCell in mGrid)
+		foreach (Cell currentCell in grid)
 		{
-			List<Cell> currentNeighbors = GetNeighborCells(currentCell.mGridIndex, GridDirection.AllDirections);
-			int bestCost = currentCell.mBestCost;
+			List<Cell> currentNeighbors = GetNeighborCells(currentCell);
+			int bestCost = currentCell.bestCost;
 			
 			foreach (Cell currentNeighbor in currentNeighbors)
 			{
-				if (currentNeighbor.mBestCost < bestCost)
+				if (currentNeighbor.bestCost < bestCost)
 				{
-					bestCost = currentNeighbor.mBestCost;
-					currentCell.mBestDirection = GridDirection.GetDirectionFromVector2Int(currentNeighbor.mGridIndex - currentCell.mGridIndex);
+					bestCost = currentNeighbor.bestCost;
+					currentCell.velocity = CalculateCellVelocity(currentCell.gridIndex, currentNeighbor.gridIndex);
 				}
 			}
 		}
 	}
 	
-	public Cell GetCellFromWorldPosition(Vector3 worldPosition)
+	private Vector2 CalculateCellVelocity(Vector2Int currentCellIndex, Vector2Int neighborCellIndex) 
 	{
-		float xRatio = worldPosition.x / (mCellDiameter);
-		float yRatio = worldPosition.z / (mCellDiameter);
-		xRatio -= mGridOffset.x;
-		yRatio -= mGridOffset.y;
-		int x = Mathf.Clamp(Mathf.FloorToInt(xRatio), 0, mGridSize.x - 1);
-		int y = Mathf.Clamp(Mathf.FloorToInt(yRatio), 0, mGridSize.y - 1);
-
-		return mGrid[x, y];
+		Vector2Int diff = neighborCellIndex - currentCellIndex;
+		Vector2 cellVelocity = Vector2.zero;
+		
+		if (diff.x == 0) // north or south
+		{
+			if (diff.y == 1) cellVelocity = new Vector2(0, 1); // north
+			else if (diff.y == -1) cellVelocity = new Vector2(0, -1); // south
+		}
+		else if (diff.x == 1) // east
+		{
+			if (diff.y == 0) cellVelocity = new Vector2(1, 0); // east
+			else if (diff.y == 1) cellVelocity = new Vector2(1, 1); // north east
+			else if (diff.y == -1) cellVelocity = new Vector2(1, -1); // south east
+		}
+		else if (diff.x == -1) // west
+		{
+			if (diff.y == 0) cellVelocity = new Vector2(-1, 0); // west
+			else if (diff.y == 1) cellVelocity = new Vector2(-1, 1); // north west
+			else if (diff.y == -1) cellVelocity = new Vector2(-1, -1); // south west
+		}
+		
+		return cellVelocity;
 	}
 	
-	public List<Cell> GetNeighborCells(Vector2Int cellIndex, List<GridDirection> directions)
+	public Cell GetCellFromWorldPosition(Vector3 worldPosition)
+	{
+		float xRatio = worldPosition.x / cellDiameter;
+		float yRatio = worldPosition.z / cellDiameter;
+		xRatio -= gridOffset.x;
+		yRatio -= gridOffset.y;
+		int x = Mathf.Clamp(Mathf.FloorToInt(xRatio), 0, gridSize.x - 1);
+		int y = Mathf.Clamp(Mathf.FloorToInt(yRatio), 0, gridSize.y - 1);
+
+		return grid[x, y];
+	}
+	
+	// need to edit this
+	public List<Cell> GetNeighborCells(Cell currentCell)
 	{
 		List<Cell> neighborCells = new List<Cell>();
-		foreach (Vector2Int currentDirection in directions)
+
+		// Loop through all adjacent cells
+		for (int x = -1; x <= 1; x++)
 		{
-			Cell newNeighbor = GetCellAtRelativePosition(cellIndex, currentDirection);
-			if (newNeighbor != null) neighborCells.Add(newNeighbor);
+			for (int y = -1; y <= 1; y++)
+			{
+				// Skip the center cell
+				if (x == 0 && y == 0) continue;
+
+				// Calculate the grid index of the adjacent cell
+				Vector2Int neighborIndex = new Vector2Int(currentCell.gridIndex.x + x, currentCell.gridIndex.y + y);
+				neighborIndex.x = Mathf.Clamp(neighborIndex.x, 0, gridSize.x - 1);
+				neighborIndex.y = Mathf.Clamp(neighborIndex.y, 0, gridSize.y - 1);
+
+				// Get a reference to the cell from the grid array
+				Cell neighborCell = grid[neighborIndex.x, neighborIndex.y];
+
+				// Add the neighbor cell to the list of neighbors
+				neighborCells.Add(neighborCell);
+			}
 		}
 		return neighborCells;
 	}
 	
-	private Cell GetCellAtRelativePosition(Vector2Int cellOrigin, Vector2Int relativePosition)
-	{
-		Vector2Int finalPosition = cellOrigin + relativePosition;
-		if (finalPosition.x < 0 || finalPosition.x >= mGridSize.x || finalPosition.y < 0 || finalPosition.y >= mGridSize.y) return null;
-		else return mGrid[finalPosition.x, finalPosition.y];
+	// returns the neighbor cell the current cell will move to
+	public Cell GetNeighborCell(Cell currentCell) {
+		return GetCellFromWorldPosition(currentCell.worldPosition + currentCell.GetVector3Velocity());
 	}
 }

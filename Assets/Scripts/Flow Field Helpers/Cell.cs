@@ -2,27 +2,38 @@ using UnityEngine;
 
 public class Cell
 {
-	public Vector3 mWorldPosition;
-	public Vector2Int mGridIndex;
-	public byte mCost; // int value from 1 to 255
-	public ushort mBestCost;
-	public GridDirection mBestDirection;
-	public bool mIsOccupied;
+	public Vector3 worldPosition;
+	public Vector2Int gridIndex;
 	
-	public Cell(Vector3 worldPosition, Vector2Int gridIndex)
+	// Pathfinding Values
+	public Unit unit;
+	public byte cost; // int value from 1 to 255
+	public ushort bestCost;
+	
+	// Fluid Simulation Values
+	public Vector2 velocity;
+	public float density;
+	
+	// Constructor
+	public Cell(Vector3 worldPos, Vector2Int index)
 	{
-		mWorldPosition = worldPosition;
-		mGridIndex = gridIndex;
-		mCost = 1;
-		mBestCost = ushort.MaxValue;
-		mBestDirection = GridDirection.None;
-		mIsOccupied = false;
+		worldPosition = worldPos;
+		gridIndex = index;
+		
+		unit = null;
+		cost = 1;
+		bestCost = ushort.MaxValue;
+	
+		velocity = Vector2.zero;
+		density = 0f;
 	}
+	
+	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y); }
 	
 	public void IncreaseCost(int val)
 	{
-		if (mCost == byte.MaxValue) return;
-		if (val + (int)mCost >= 255) mCost = byte.MaxValue;
-		else mCost += (byte)val;
+		if (cost == byte.MaxValue) return;
+		if (val + (int)cost >= 255) cost = byte.MaxValue;
+		else cost += (byte)val;
 	}
 }

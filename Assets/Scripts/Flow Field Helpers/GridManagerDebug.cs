@@ -6,9 +6,9 @@ using UnityEngine;
 public class GridManagerDebug : MonoBehaviour
 {
 	public Sprite[] FlowFieldIcons;
+	public Material ArrowMaterial;
 	
 	private GridManager mGridManager;
-	private bool mIsDisplayGrid;
 	private int mDebugHandlerTracker1;
 	private int mDebugHandlerTracker2;
 	
@@ -22,7 +22,6 @@ public class GridManagerDebug : MonoBehaviour
     private void Start()
     {
         mGridManager = GetComponent<GridManager>();
-		mIsDisplayGrid = true;
 		mDebugHandlerTracker1 = 0;
 		mDebugHandlerTracker2 = 1;
 		mIconPositionOffset = new Vector3(0.0f, 0.2f, 0.0f);
@@ -30,27 +29,7 @@ public class GridManagerDebug : MonoBehaviour
 		mPreviousFlowField = null;
     }
 
-	private void Update()
-	{
-		//ToogleGridDisplay();
-		//ToogleDebugNumbers();
-		ToogleFlowFieldDisplay();
-	}
-	
-	private void ToogleGridDisplay()
-	{
-		if (Input.GetKeyUp(KeyCode.DownArrow))
-		{
-			if (mIsDisplayGrid) mIsDisplayGrid = false;
-			else mIsDisplayGrid = true;
-		}
-	}
-	
-	private void ToogleDebugNumbers()
-	{
-		if (Input.GetKeyUp(KeyCode.UpArrow)) mDebugHandlerTracker1++;
-		if (mDebugHandlerTracker1 > 1) mDebugHandlerTracker1 = 0;
-	}
+	private void Update() { ToogleFlowFieldDisplay(); }
 	
 	private void ToogleFlowFieldDisplay()
 	{
@@ -74,38 +53,7 @@ public class GridManagerDebug : MonoBehaviour
 			}
 		}
 	}
-	/*
-    private void OnDrawGizmos()
-    {
-		if (mGridManager == null) return;
-		
-        if (mIsDisplayGrid == true)
-		{
-			if (mGridManager.CurrentFlowField == null) DrawGrid(mGridManager.GridSize, mGridManager.CellRadius, Color.red);
-			else DrawGrid(mGridManager.GridSize, mGridManager.CellRadius, Color.green);
-		}
-		
-		if (mGridManager.CurrentFlowField == null) return;
-		
-		GUIStyle style = new GUIStyle(GUI.skin.label);
-		style.alignment = TextAnchor.MiddleCenter;
-		
-		if (mDebugHandlerTracker1 == 0)
-		{
-			foreach (Cell currentCell in mGridManager.CurrentFlowField.mGrid)
-			{
-				Handles.Label(currentCell.mWorldPosition, currentCell.mCost.ToString(), style);
-			}
-		}
-		else if (mDebugHandlerTracker1 == 1)
-		{
-			foreach (Cell currentCell in mGridManager.CurrentFlowField.mGrid)
-			{
-				Handles.Label(currentCell.mWorldPosition, currentCell.mBestCost.ToString(), style);
-			}
-		}
-    }
-	*/
+
 	private void DrawGrid(Vector2Int gridSize, float cellRadius, Color lineColor)
 	{
 		float cellDiameter = cellRadius * 2.0f;
@@ -124,8 +72,8 @@ public class GridManagerDebug : MonoBehaviour
 	private void SetFlowField(FlowField flowField)
 	{
 		mCurrentFlowField = flowField;
-		mCellRadius = flowField.mCellRadius;
-		mGridSize = flowField.mGridSize;
+		mCellRadius = flowField.cellRadius;
+		mGridSize = flowField.gridSize;
 	}
 	
 	private void DrawFlowField()
@@ -147,7 +95,7 @@ public class GridManagerDebug : MonoBehaviour
 	private void DisplayAllCells()
 	{
 		if (mCurrentFlowField == null) return;
-		foreach (Cell currentCell in mCurrentFlowField.mGrid)
+		foreach (Cell currentCell in mCurrentFlowField.grid)
 		{
 			DisplayCell(currentCell);
 		}
@@ -156,26 +104,59 @@ public class GridManagerDebug : MonoBehaviour
 	private void DisplayDestinationCell()
 	{
 		if (mCurrentFlowField == null) return;
-		DisplayCell(mCurrentFlowField.mDestinationCell);
+		DisplayCell(mCurrentFlowField.destinationCell);
 	}
 	
+	// I need to edit this
 	private void DisplayCell(Cell cell)
 	{
+		// Create a new game object to represent the cell's velocity
+		GameObject arrow = new GameObject("Arrow");
+		arrow.transform.parent = transform;
+
+		// Add a mesh renderer component to the game object
+		MeshRenderer renderer = arrow.AddComponent<MeshRenderer>();
+		renderer.material = ArrowMaterial;
+
+		// Create a new mesh for the arrow
+		Mesh mesh = new Mesh();
+		mesh.vertices = new Vector3[] {
+			new Vector3(0, 0, 0),
+			new Vector3(0, 1, 0),
+			new Vector3(0.25f, 0.75f, 0),
+			new Vector3(-0.25f, 0.75f, 0),
+			new Vector3(0, 1, 0),
+			new Vector3(0, 0, 0)
+		};
+		mesh.triangles = new int[] { 0, 1, 2, 0, 3, 1, 4, 5, 1 };
+		mesh.RecalculateNormals();
+
+		// Set the mesh of the renderer to the new mesh
+		MeshFilter filter = arrow.AddComponent<MeshFilter>();
+		filter.mesh = mesh;
+		
+		arrow.transform.position = cell.worldPosition;
+		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, cell.velocity);
+		rotation.eulerAngles = new Vector3(90f, rotation.eulerAngles.y, rotation.eulerAngles.z);
+		arrow.transform.rotation = rotation;
+		
+		/*
 		GameObject iconObj = new GameObject();
 		SpriteRenderer iconSR = iconObj.AddComponent<SpriteRenderer>();
 		iconObj.transform.parent = transform;
-		iconObj.transform.position = cell.mWorldPosition + mIconPositionOffset;
+		iconObj.transform.position = cell.worldPosition + mIconPositionOffset;
 		iconObj.transform.rotation = mIconRotation;
 		
-		if (cell.mCost == 0)										iconSR.sprite = FlowFieldIcons[9];
-		else if (cell.mCost == byte.MaxValue)						iconSR.sprite = FlowFieldIcons[0];
-		else if (cell.mBestDirection == GridDirection.North)		iconSR.sprite = FlowFieldIcons[1];
-		else if (cell.mBestDirection == GridDirection.NorthEast)	iconSR.sprite = FlowFieldIcons[2];
-		else if (cell.mBestDirection == GridDirection.East)			iconSR.sprite = FlowFieldIcons[3];
-		else if (cell.mBestDirection == GridDirection.SouthEast)	iconSR.sprite = FlowFieldIcons[4];
-		else if (cell.mBestDirection == GridDirection.South)		iconSR.sprite = FlowFieldIcons[5];
-		else if (cell.mBestDirection == GridDirection.SouthWest)	iconSR.sprite = FlowFieldIcons[6];
-		else if (cell.mBestDirection == GridDirection.West)			iconSR.sprite = FlowFieldIcons[7];
-		else if (cell.mBestDirection == GridDirection.NorthWest)	iconSR.sprite = FlowFieldIcons[8];
+		if (cell.cost == 0)								iconSR.sprite = FlowFieldIcons[9]; // goal
+		else if (cell.cost == byte.MaxValue)			iconSR.sprite = FlowFieldIcons[0]; // non-passable
+		else if (cell.velocity == new Vector2(0, 1))	iconSR.sprite = FlowFieldIcons[1]; // north
+		else if (cell.velocity == new Vector2(1, 1))	iconSR.sprite = FlowFieldIcons[2]; // north east
+		else if (cell.velocity == new Vector2(1, 0))	iconSR.sprite = FlowFieldIcons[3]; // east
+		else if (cell.velocity == new Vector2(1, -1))	iconSR.sprite = FlowFieldIcons[4]; // south east
+		else if (cell.velocity == new Vector2(0, -1))	iconSR.sprite = FlowFieldIcons[5]; // south
+		else if (cell.velocity == new Vector2(-1, -1))	iconSR.sprite = FlowFieldIcons[6]; // south west
+		else if (cell.velocity == new Vector2(-1, 0))	iconSR.sprite = FlowFieldIcons[7]; // west
+		else if (cell.velocity == new Vector2(-1, 1))	iconSR.sprite = FlowFieldIcons[8]; // north west
+		*/
 	}
 }

@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 	private const int SCREEN_HEIGHT = 50; // z
 	
 	private const int UNIT_SPAWN_AMOUNT = 250;
-	private const int MAX_UNIT_NUMBER = 2000;
+	[SerializeField] private int MAX_UNIT_NUMBER = 2000;
 	
     private void Awake()
     {
@@ -74,29 +74,19 @@ public class GameManager : MonoBehaviour
 
 		for (int i = 0; i < mUnitList.Count; i++)
 		{
-			Cell belowCell = mGridManager.CurrentFlowField.GetCellFromWorldPosition(mUnitList[i].transform.position);
-			if (mUnitList[i].GetPreviousCell() == null) // should only be called once
-			{
-				mUnitList[i].SetPreviousCell(belowCell);
-				mUnitList[i].GetPreviousCell().mIsOccupied = true;
-			}
-			mUnitList[i].SetCurrentCell(belowCell);
-			mUnitList[i].GetCurrentCell().mIsOccupied = true;
-
-			Vector3 moveDirection = new Vector3(belowCell.mBestDirection.mVector.x, 0, belowCell.mBestDirection.mVector.y);
+			// Get the current cell and set it as the previous cell
+			Cell currentCell = mGridManager.CurrentFlowField.GetCellFromWorldPosition(mUnitList[i].transform.position);
+			Cell previousCell = currentCell;
+			Cell nextCell = mGridManager.CurrentFlowField.GetNeighborCell(currentCell);
+			
+			previousCell.unit = null; // Set the unit of the previous cell to null			
+			currentCell.unit = mUnitList[i]; // Set the unit of the current cell
+			
 			float unitSpeed = Random.Range(1, UnitSpeed);
-
-			// prevent the units from overlapping each other
-			List<Cell> currentNeighbors = mGridManager.CurrentFlowField.GetNeighborCells(belowCell.mGridIndex, GridDirection.AllDirections);
-			foreach (Cell currentNeighbor in currentNeighbors)
-			{
-				if (currentNeighbor.mIsOccupied && currentNeighbor.mBestDirection == belowCell.mBestDirection)
-				{
-					unitSpeed /= 1.6f; // Slow Down
-				}
-			}
-
-			mUnitList[i].transform.position += moveDirection * Time.fixedDeltaTime * unitSpeed;
+			
+			if (nextCell.unit != null) unitSpeed *= 0.5f; // slow down
+			
+			mUnitList[i].transform.position += nextCell.GetVector3Velocity() * Time.fixedDeltaTime * unitSpeed;
 		}
 	}
 
@@ -123,7 +113,6 @@ public class GameManager : MonoBehaviour
 			{
 				if (mUnitList.Count >= MAX_UNIT_NUMBER) return;
 				GameObject unit = Instantiate(mUnitPrefab);
-				
 				unit.transform.position = GetRandomPositionWithinTheGrid();
 			}
 		}
