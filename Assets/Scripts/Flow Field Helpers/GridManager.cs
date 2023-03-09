@@ -4,28 +4,44 @@ using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
-    public Vector2Int GridSize;
-    public Vector2Int GridOffset;
-    public float CellRadius;
-    public FlowField CurrentFlowField;
+    public Vector2Int gridSize;
+    public Vector2Int gridOffset;
+    public float cellRadius;
+    public FlowField currentFlowField { get; private set; }
 	
+	public void InitalizeFlowField()
+	{
+		currentFlowField = new FlowField(gridSize, gridOffset, cellRadius);
+		currentFlowField.GenerateGrid();
+		GetComponent<GridManagerDebug>().DrawGrid(gridSize, gridOffset, cellRadius, cellRadius * 2);
+	}
+	
+	public void UpdateVectorField()
+	{
+		foreach (Cell cell in currentFlowField.grid)
+		{
+			
+		}
+	}
+
+	//private void GeneratePath(Vector3 startPosition, Vector3 goalPosition)
+	//{
+	//	currentFlowField.GeneratePath(startPosition, goalPosition);
+	//}
+	
+	/// My stuff below
+	// edit this function
 	public void UpdateFlowField(Vector3 goalPosition)
 	{
-		InitalizeFlowField();
-		CurrentFlowField.GenerateCostField();
+		//InitalizeFlowField();
+		currentFlowField.GenerateCostField();
 		SetDestinationCell(goalPosition);
-		CurrentFlowField.GenerateFlowField();
+		currentFlowField.GenerateFlowField();
 	}
 	
 	private void SetDestinationCell(Vector3 goalPosition)
 	{
-		Cell destinationCell = CurrentFlowField.GetCellFromWorldPosition(goalPosition);
-		CurrentFlowField.GenerateIntergrationField(destinationCell);
-	}
-	
-	private void InitalizeFlowField()
-	{
-		CurrentFlowField = new FlowField(GridSize, GridOffset, CellRadius);
-		CurrentFlowField.GenerateGrid();
+		Cell destinationCell = currentFlowField.GetCellFromWorldPosition(goalPosition);
+		currentFlowField.GenerateIntergrationField(destinationCell);
 	}
 }

@@ -5,95 +5,56 @@ using UnityEngine;
 
 public class GridManagerDebug : MonoBehaviour
 {
-	public Sprite[] FlowFieldIcons;
-	public Material ArrowMaterial;
+	[SerializeField] private GameObject mLinePrefab;
+	[SerializeField] private Transform mCellHolder;
+	[SerializeField] private Transform mGridHolder;
 	
 	private GridManager mGridManager;
-	private int mDebugHandlerTracker1;
-	private int mDebugHandlerTracker2;
-	
-	private Vector2Int mGridSize;
-	private float mCellRadius;
 	private FlowField mCurrentFlowField;
-	private Vector3 mIconPositionOffset;
-	private Quaternion mIconRotation;
 	private FlowField mPreviousFlowField;
+	private bool mIsDebugActivated;
 	
     private void Start()
     {
         mGridManager = GetComponent<GridManager>();
-		mDebugHandlerTracker1 = 0;
-		mDebugHandlerTracker2 = 1;
-		mIconPositionOffset = new Vector3(0.0f, 0.2f, 0.0f);
-		mIconRotation = Quaternion.Euler(90.0f, 0.0f, 0.0f);
 		mPreviousFlowField = null;
+		mIsDebugActivated = true;
     }
 
 	private void Update() { ToogleFlowFieldDisplay(); }
 	
-	private void ToogleFlowFieldDisplay()
-	{
-		if (Input.GetKeyUp(KeyCode.Space)) mDebugHandlerTracker2++;
-		if (mDebugHandlerTracker2 > 1) mDebugHandlerTracker2 = 0;
+	private void ToogleFlowFieldDisplay() {
+		if (Input.GetKeyUp(KeyCode.Space)) mIsDebugActivated = !mIsDebugActivated;
 		
-		if (mDebugHandlerTracker2 == 0)
-		{
-			mPreviousFlowField = null;
-			ClearCellDisplay();
-		}
-		else if (mDebugHandlerTracker2 == 1)
-		{
-			if (mGridManager == null || mGridManager.CurrentFlowField == null) return;
+		if (mIsDebugActivated) {
+			if (mGridManager == null || mGridManager.currentFlowField == null) return;
 			
-			if (mPreviousFlowField != mGridManager.CurrentFlowField)
+			if (mPreviousFlowField != mGridManager.currentFlowField)
 			{
-				mPreviousFlowField = mGridManager.CurrentFlowField;
-				SetFlowField(mGridManager.CurrentFlowField);
+				mPreviousFlowField = mGridManager.currentFlowField;
+				SetFlowField(mGridManager.currentFlowField);
 				DrawFlowField();
 			}
 		}
-	}
-
-	private void DrawGrid(Vector2Int gridSize, float cellRadius, Color lineColor)
-	{
-		float cellDiameter = cellRadius * 2.0f;
-		Gizmos.color = lineColor;
-		for (int x = 0; x < gridSize.x; x++)
-		{
-			for (int y = 0; y < gridSize.y; y++)
-			{
-				Vector3 cellCenter = new Vector3(cellDiameter * x + cellRadius, 0, cellDiameter * y + cellRadius);
-				Vector3 cellSize = Vector3.one * cellDiameter;
-				Gizmos.DrawWireCube(cellCenter, cellSize);
-			}
+		else {
+			mPreviousFlowField = null;
+			ClearCellDisplay();
 		}
 	}
 	
-	private void SetFlowField(FlowField flowField)
-	{
-		mCurrentFlowField = flowField;
-		mCellRadius = flowField.cellRadius;
-		mGridSize = flowField.gridSize;
-	}
-	
-	private void DrawFlowField()
-	{
+	private void DrawFlowField() {
 		ClearCellDisplay();
-		
-		if (mDebugHandlerTracker1 == 0) DisplayAllCells();
-		else if (mDebugHandlerTracker1 == 1) DisplayDestinationCell();
+		DisplayAllCells();
 	}
 	
-	private void ClearCellDisplay()
-	{
-		foreach (Transform iconTransforms in transform)
+	private void ClearCellDisplay() {
+		foreach (Transform cell in mCellHolder)
 		{
-			GameObject.Destroy(iconTransforms.gameObject);
+			GameObject.Destroy(cell.gameObject);
 		}
 	}
 	
-	private void DisplayAllCells()
-	{
+	private void DisplayAllCells() {
 		if (mCurrentFlowField == null) return;
 		foreach (Cell currentCell in mCurrentFlowField.grid)
 		{
@@ -101,62 +62,45 @@ public class GridManagerDebug : MonoBehaviour
 		}
 	}
 	
-	private void DisplayDestinationCell()
+	private void DisplayCell(Cell cell) 
 	{
-		if (mCurrentFlowField == null) return;
-		DisplayCell(mCurrentFlowField.destinationCell);
+		GameObject line = CreateLine("vector", cell.worldPosition, 0.2f, cell.color, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
+		line.transform.parent = mCellHolder;
 	}
 	
-	// I need to edit this
-	private void DisplayCell(Cell cell)
+	private GameObject CreateLine(string lineName, Vector3 linePos, float lineWidth, Color lineColor, Vector3 lineStartPos, Vector3 lineEndPos) {
+		GameObject line = Instantiate(mLinePrefab);
+		line.name = lineName;
+		line.transform.position = linePos;
+		LineRenderer lineRend = line.GetComponent<LineRenderer>();
+		lineRend.startWidth = lineWidth;
+		lineRend.endWidth = lineWidth;
+		lineRend.positionCount = 2;
+		lineRend.material.SetColor("_Color", lineColor);
+		lineRend.SetPositions(new Vector3[] { lineStartPos, lineEndPos });
+		return line;
+	}
+	
+	private void SetFlowField(FlowField flowField) { mCurrentFlowField = flowField; }
+	public void DrawGrid(Vector2Int gridSize, Vector2Int gridOffset, float cellRadius, float cellDiameter)
 	{
-		// Create a new game object to represent the cell's velocity
-		GameObject arrow = new GameObject("Arrow");
-		arrow.transform.parent = transform;
-
-		// Add a mesh renderer component to the game object
-		MeshRenderer renderer = arrow.AddComponent<MeshRenderer>();
-		renderer.material = ArrowMaterial;
-
-		// Create a new mesh for the arrow
-		Mesh mesh = new Mesh();
-		mesh.vertices = new Vector3[] {
-			new Vector3(0, 0, 0),
-			new Vector3(0, 1, 0),
-			new Vector3(0.25f, 0.75f, 0),
-			new Vector3(-0.25f, 0.75f, 0),
-			new Vector3(0, 1, 0),
-			new Vector3(0, 0, 0)
-		};
-		mesh.triangles = new int[] { 0, 1, 2, 0, 3, 1, 4, 5, 1 };
-		mesh.RecalculateNormals();
-
-		// Set the mesh of the renderer to the new mesh
-		MeshFilter filter = arrow.AddComponent<MeshFilter>();
-		filter.mesh = mesh;
+		float gridWidth = gridSize.x * cellDiameter;
+		float gridHeight = gridSize.y * cellDiameter;
 		
-		arrow.transform.position = cell.worldPosition;
-		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, cell.velocity);
-		rotation.eulerAngles = new Vector3(90f, rotation.eulerAngles.y, rotation.eulerAngles.z);
-		arrow.transform.rotation = rotation;
+		for (int y = 0; y <= gridSize.y; y++)
+		{
+			Vector3 startPos = new Vector3(gridOffset.x * cellDiameter, 0, y * cellDiameter + gridOffset.y * cellDiameter);
+			Vector3 endPos = new Vector3(gridOffset.x * cellDiameter + gridWidth, 0, y * cellDiameter + gridOffset.y * cellDiameter);	
+			GameObject line = CreateLine("row", Vector3.zero, 0.1f, Color.black, startPos, endPos);
+			line.transform.parent = mGridHolder;
+		}
 		
-		/*
-		GameObject iconObj = new GameObject();
-		SpriteRenderer iconSR = iconObj.AddComponent<SpriteRenderer>();
-		iconObj.transform.parent = transform;
-		iconObj.transform.position = cell.worldPosition + mIconPositionOffset;
-		iconObj.transform.rotation = mIconRotation;
-		
-		if (cell.cost == 0)								iconSR.sprite = FlowFieldIcons[9]; // goal
-		else if (cell.cost == byte.MaxValue)			iconSR.sprite = FlowFieldIcons[0]; // non-passable
-		else if (cell.velocity == new Vector2(0, 1))	iconSR.sprite = FlowFieldIcons[1]; // north
-		else if (cell.velocity == new Vector2(1, 1))	iconSR.sprite = FlowFieldIcons[2]; // north east
-		else if (cell.velocity == new Vector2(1, 0))	iconSR.sprite = FlowFieldIcons[3]; // east
-		else if (cell.velocity == new Vector2(1, -1))	iconSR.sprite = FlowFieldIcons[4]; // south east
-		else if (cell.velocity == new Vector2(0, -1))	iconSR.sprite = FlowFieldIcons[5]; // south
-		else if (cell.velocity == new Vector2(-1, -1))	iconSR.sprite = FlowFieldIcons[6]; // south west
-		else if (cell.velocity == new Vector2(-1, 0))	iconSR.sprite = FlowFieldIcons[7]; // west
-		else if (cell.velocity == new Vector2(-1, 1))	iconSR.sprite = FlowFieldIcons[8]; // north west
-		*/
+		for (int x = 0; x <= gridSize.x; x++)
+		{
+			Vector3 startPos = new Vector3(x * cellDiameter + gridOffset.x * cellDiameter, 0, gridOffset.y * cellDiameter);
+			Vector3 endPos = new Vector3(x * cellDiameter + gridOffset.x * cellDiameter, 0, gridOffset.y * cellDiameter + gridHeight);
+			GameObject line = CreateLine("column", Vector3.zero, 0.1f, Color.black, startPos, endPos);
+			line.transform.parent = mGridHolder;
+		}
 	}
 }

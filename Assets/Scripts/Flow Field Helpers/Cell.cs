@@ -9,6 +9,7 @@ public class Cell
 	public Unit unit;
 	public byte cost; // int value from 1 to 255
 	public ushort bestCost;
+	public Color color;
 	
 	// Fluid Simulation Values
 	public Vector2 velocity;
@@ -23,9 +24,16 @@ public class Cell
 		unit = null;
 		cost = 1;
 		bestCost = ushort.MaxValue;
+		color = Color.white;
 	
 		velocity = Vector2.zero;
 		density = 0f;
+	}
+	
+	public void UpdateColor(Color unitColor) 
+	{
+		if (unit == null) color = Color.white;
+		else color = unitColor;
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y); }
