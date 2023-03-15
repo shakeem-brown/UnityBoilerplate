@@ -25,14 +25,17 @@ public class GameManager : MonoBehaviour
 		screenWidth = mGridManager.gridSize.x * (mGridManager.cellRadius * 2f);
 		screenHeight = mGridManager.gridSize.y * (mGridManager.cellRadius * 2f);
 		
+		Vector3 cameraPos = Camera.main.transform.position;
+		cameraPos.x = mGridManager.gridSize.x * 0.5f;
+		cameraPos.z = mGridManager.gridSize.y * 0.5f;
+		Camera.main.transform.position = cameraPos;
+		Camera.main.orthographicSize = mGridManager.gridSize.y * 0.5f;
+		
 		mGridManager.InitalizeFlowField();
 		SpawnUnits(true); // Spawning the units at the start of the game
 	}
 
-    private void Update() {
-		UpdateGoalDestination();
-		GetComponent<GameManagerUI>().UpdateUnitCount(); // UI updates
-	}
+    private void Update() { UpdateGoalDestination(); }
 
     private void FixedUpdate() { GamePlayControls(); }
 	
