@@ -81,6 +81,7 @@ public class FlowField
 		destinationCell = goalCell;
 		destinationCell.cost = 0;
 		destinationCell.bestCost = 0;
+		destinationCell.velocity = Vector2.zero;
 		
 		Queue<Cell> cellsToCheck = new Queue<Cell>();
 		cellsToCheck.Enqueue(destinationCell);
