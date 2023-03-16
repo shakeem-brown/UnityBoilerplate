@@ -41,30 +41,25 @@ public class GridManagerDebug : MonoBehaviour
 	public void ClearCellDisplay() {
 		foreach (Transform cell in mCellHolder) {
 			Destroy(cell.gameObject);
-			mCellList.Clear();
 		}
 	}
 
-	private List<Cell> mCellList = new List<Cell>();
 	private void DisplayAllCells() {
 		foreach (Cell currentCell in currentFlowField.grid) {
-			if (!mCellList.Contains(currentCell)) {
-				mCellList.Add(currentCell);
-				DisplayCell(currentCell);
-			}
-			else {
-				int index = mCellList.IndexOf(currentCell);
-				if (mCellList[index].velocity != currentCell.velocity) {
-					mCellList[index] = currentCell;
-					DisplayCell(currentCell);
-				}
-			}
+			if (mCellHolder.childCount < currentFlowField.grid.Length) DisplayCell(currentCell);
+			UpdateLineProperties(currentCell.gameObject, currentCell.worldPosition, currentCell.worldPosition + currentCell.GetVector3Velocity());
 		}
+	}
+	
+	private void UpdateLineProperties(GameObject line, Vector3 lineStartPos, Vector3 lineEndPos) {
+		LineRenderer lineRend = line.GetComponent<LineRenderer>();
+		lineRend.SetPositions(new Vector3[] { lineStartPos, lineEndPos });
 	}
 	
 	private void DisplayCell(Cell cell)  {
 		GameObject line = CreateLine("vector", cell.worldPosition, 0.2f, cell.vectorColor, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
 		line.transform.parent = mCellHolder;
+		cell.gameObject = line;
 	}
 	
 	private GameObject CreateLine(string lineName, Vector3 linePos, float lineWidth, Color lineColor, Vector3 lineStartPos, Vector3 lineEndPos) {

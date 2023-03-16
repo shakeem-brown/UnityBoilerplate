@@ -4,17 +4,31 @@ using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
+	[Header("Generic Grid Properties")]
     public Vector2Int gridSize;
     public Vector2Int gridOffset;
     public float cellRadius;
+	
+	[Header("Fluid Simulation Properties")]
+	[Min(1)] public float maxSpeed;
+	[Min(0)] public float speedDamping;
+	[Min(1)] public int pressureIterations;
+	public Vector2 fluidDensity;
+	
     public FlowField currentFlowField { get; private set; }
+    public FluidSimulation currentFluidSimulation { get; private set; }
 	public Cell lastDestinationCell { get; private set; }
 	private GridManagerDebug mGridManagerDebug;
 	
 	public void InitalizeFlowField() {
+		// initalizing the flow field and generating the grid
 		currentFlowField = new FlowField(gridSize, gridOffset, cellRadius);
 		currentFlowField.GenerateGrid();
 		
+		// initalizing the fluid simulation
+		currentFluidSimulation = new FluidSimulation(currentFlowField, maxSpeed, speedDamping, pressureIterations, fluidDensity);
+		
+		// Debug
 		mGridManagerDebug = GetComponent<GridManagerDebug>();
 		mGridManagerDebug.DrawGrid(gridSize, gridOffset, cellRadius, cellRadius * 2);
 	}

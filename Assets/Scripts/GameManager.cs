@@ -35,7 +35,10 @@ public class GameManager : MonoBehaviour
 		SpawnUnits(true); // Spawning the units at the start of the game
 	}
 
-    private void Update() { UpdateGoalDestination(); }
+    private void Update() { 
+		UpdateGoalDestination(); 
+		if (mGridManager.currentFluidSimulation != null) mGridManager.currentFluidSimulation.ApplyFluidSimulation();
+	}
 
     private void FixedUpdate() { GamePlayControls(); }
 	

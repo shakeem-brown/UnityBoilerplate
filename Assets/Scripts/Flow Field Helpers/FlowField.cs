@@ -41,7 +41,14 @@ public class FlowField
 					
 					if (x == 0 && y == 0) continue; // skip yourself (the center cell)
 					if (neighborIndex == cell.gridIndex) continue; // skip yourself
-					cell.neighborCells.Add(grid[neighborIndex.x, neighborIndex.y]);
+					Cell neighborCell = grid[neighborIndex.x, neighborIndex.y];
+					
+					if (x == 0 && y == 1) cell.northCell = neighborCell;
+					else if (x == 1 && y == 0) cell.eastCell = neighborCell;
+					else if (x == 0 && y == -1) cell.southCell = neighborCell;
+					else if (x == -1 && y == 0) cell.westCell = neighborCell;
+					
+					cell.neighborCells.Add(neighborCell);
 				}
 			}
 		}

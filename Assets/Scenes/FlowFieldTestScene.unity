@@ -173,6 +173,10 @@ MonoBehaviour:
   gridSize: {x: 25, y: 25}
   gridOffset: {x: 0, y: 0}
   cellRadius: 0.5
+  maxSpeed: 2
+  speedDamping: 0.2
+  pressureIterations: 3
+  fluidDensity: {x: 1.025, y: 1.035}
 --- !u!4 &424040254
 Transform:
   m_ObjectHideFlags: 0
@@ -203,7 +207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mUnitPrefab: {fileID: 7386972907085800543, guid: 754ef9be37c3be54fb550852d22fa7fd, type: 3}
-  unitSpawnAmount: {x: 1, y: 6000}
+  unitSpawnAmount: {x: 0, y: 6000}
   timer: {x: 0, y: 5}
 --- !u!114 &424040256
 MonoBehaviour:
@@ -328,8 +332,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -150, y: -90}
-  m_SizeDelta: {x: 300, y: 60}
+  m_AnchoredPosition: {x: -175, y: -90}
+  m_SizeDelta: {x: 350, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1024392509
 GameObject:
@@ -408,8 +412,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -150, y: -30}
-  m_SizeDelta: {x: 300, y: 60}
+  m_AnchoredPosition: {x: -175, y: -30}
+  m_SizeDelta: {x: 350, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1226704863
 GameObject:
