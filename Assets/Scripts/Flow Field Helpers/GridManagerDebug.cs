@@ -5,40 +5,31 @@ using UnityEngine;
 
 public class GridManagerDebug : MonoBehaviour
 {
-	[SerializeField] private GameObject mLinePrefab;
-	[SerializeField] private Transform mCellHolder;
-	[SerializeField] private Transform mGridHolder;
+	[HideInInspector] [SerializeField] private GameObject mLinePrefab;
+	[HideInInspector] [SerializeField] private Transform mCellHolder;
+	[HideInInspector] [SerializeField] private Transform mGridHolder;
 	
 	public FlowField currentFlowField;
-	private GridManager mGridManager;
-	private bool mIsDebugActivated;
+	[HideInInspector] private GridManager mGridManager;
+	[HideInInspector] public bool isDebugActivated;
 	
     private void Start() {
         mGridManager = GetComponent<GridManager>();
-		mIsDebugActivated = true;
     }
 
 	private void Update() {
-		ToogleFlowFieldDisplay(); 
 		FlowFieldDisplay();
 	}
 	
-	private void ToogleFlowFieldDisplay() { 
-		if (Input.GetKey(KeyCode.Space)) {
-			mIsDebugActivated = !mIsDebugActivated; 
-			if (!mIsDebugActivated) ClearCellDisplay();
-		}
-	}
-	
 	private void FlowFieldDisplay() {	
-		if (mIsDebugActivated) {
+		if (isDebugActivated) {
 			if (mGridManager == null || currentFlowField == null) return;
 			if (currentFlowField != mGridManager.currentFlowField) return;
 			DisplayAllCells();
 		}
 	}
 	
-	public void ClearCellDisplay() {
+	private void ClearCellDisplay() {
 		foreach (Transform cell in mCellHolder) {
 			Destroy(cell.gameObject);
 		}
@@ -73,6 +64,18 @@ public class GridManagerDebug : MonoBehaviour
 		lineRend.material.SetColor("_Color", lineColor);
 		lineRend.SetPositions(new Vector3[] { lineStartPos, lineEndPos });
 		return line;
+	}
+	
+	// accessors
+	public void ToogleFlowFieldDisplay() { 
+		isDebugActivated = !isDebugActivated; 
+		if (!isDebugActivated) ClearCellDisplay();
+	}
+	
+	public void ToogleGridVisibility() {
+		foreach (Transform cell in mGridHolder) {
+			cell.gameObject.SetActive(!cell.gameObject.activeSelf);
+		}
 	}
 	
 	public void DrawGrid(Vector2Int gridSize, Vector2Int gridOffset, float cellRadius, float cellDiameter) {

@@ -8,7 +8,7 @@ public class GridManager : MonoBehaviour
     public Vector2Int gridSize;
     public Vector2Int gridOffset;
     public float cellRadius;
-	
+	[Space]
 	[Header("Fluid Simulation Properties")]
 	[Min(1)] public float maxSpeed;
 	[Min(0)] public float speedDamping;
@@ -28,7 +28,7 @@ public class GridManager : MonoBehaviour
 		// initalizing the fluid simulation
 		currentFluidSimulation = new FluidSimulation(currentFlowField, maxSpeed, speedDamping, pressureIterations, fluidDensity);
 		
-		// Debug
+		// DEBUG
 		mGridManagerDebug = GetComponent<GridManagerDebug>();
 		mGridManagerDebug.DrawGrid(gridSize, gridOffset, cellRadius, cellRadius * 2);
 	}
@@ -44,7 +44,6 @@ public class GridManager : MonoBehaviour
             lastDestinationCell = destinationCell;
 			
 			// DEBUG
-			mGridManagerDebug.ClearCellDisplay();
 			mGridManagerDebug.currentFlowField = currentFlowField;
         }
     }

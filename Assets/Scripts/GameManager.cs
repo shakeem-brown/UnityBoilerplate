@@ -5,50 +5,48 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-	[SerializeField] private GameObject mUnitPrefab;
+	[HideInInspector] [SerializeField] private GameObject mUnitPrefab;
 	[SerializeField] private Vector2Int unitSpawnAmount; // x = current unit number, y = max unit number
 	[SerializeField] private Vector2 timer; // x = current time, y = max time
 	
 	public GridManager mGridManager { get; private set; }
-	public List<Unit> mUnitList { get; private set; }
-	
-	private float screenWidth;
-	private float screenHeight;
-	
+	public List<Unit> unitList { get; private set; }
+	[HideInInspector] public bool isFluidSimulationActive;
+
+
     private void Awake() {
 		mGridManager = GetComponent<GridManager>();
-        mUnitList = new List<Unit>();
+        unitList = new List<Unit>();
     }
 
-	
     private void Start() {
-		screenWidth = mGridManager.gridSize.x * (mGridManager.cellRadius * 2f);
-		screenHeight = mGridManager.gridSize.y * (mGridManager.cellRadius * 2f);
-		
 		Vector3 cameraPos = Camera.main.transform.position;
-		cameraPos.x = mGridManager.gridSize.x * 0.5f;
-		cameraPos.z = mGridManager.gridSize.y * 0.5f;
+		cameraPos.x = mGridManager.gridSize.x * mGridManager.cellRadius;
+		cameraPos.z = mGridManager.gridSize.y * mGridManager.cellRadius;
 		Camera.main.transform.position = cameraPos;
-		Camera.main.orthographicSize = mGridManager.gridSize.y * 0.5f;
+		Camera.main.orthographicSize = mGridManager.gridSize.y * mGridManager.cellRadius;
 		
 		mGridManager.InitalizeFlowField();
 		SpawnUnits(true); // Spawning the units at the start of the game
 	}
 
     private void Update() { 
-		UpdateGoalDestination(); 
-		if (mGridManager.currentFluidSimulation != null) mGridManager.currentFluidSimulation.ApplyFluidSimulation();
+		if (Input.GetMouseButton(0)) UpdateGoalDestinationMouseClick(); 
+		UpdateFluidSimulation();
 	}
 
-    private void FixedUpdate() { GamePlayControls(); }
+    private void FixedUpdate() { GameLoop(); }
 	
-	private void GamePlayControls() {
+	private void UpdateFluidSimulation() {
+		if (isFluidSimulationActive) {
+			if (mGridManager.currentFluidSimulation != null) mGridManager.currentFluidSimulation.UpdateFluidSimulation();
+		}
+	}
+	
+	private void GameLoop() {
 		// game modifications
 		SpawnUnits(Input.GetKey(KeyCode.P));
 		UpdateUnitPosition();
-		
-		// key inputs
-		MoveCamera();
 		
 		// scene management
 		if (Input.GetKey(KeyCode.Escape)) Application.Quit();
@@ -57,7 +55,7 @@ public class GameManager : MonoBehaviour
 	
 	private void UpdateUnitPosition() {
 		if (mGridManager.currentFlowField != null) {
-			foreach (Unit unit in mUnitList) {
+			foreach (Unit unit in unitList) {
 				Cell currentCell = mGridManager.currentFlowField.GetCellFromWorldPosition(unit.transform.position);
 				Cell nextCell = mGridManager.currentFlowField.GetNeighborCell(currentCell);
 				
@@ -66,11 +64,14 @@ public class GameManager : MonoBehaviour
 				float unitSpeed = unit.speed;
 				if (nextCell.unit != null) unitSpeed *= 0.5f; // slow down
 				unit.transform.position += currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unitSpeed;
+				
+				// if a unit reaches the goal cell then start a timer to change the destinationCell
+				if (currentCell == mGridManager.currentFlowField.destinationCell) UpdateGoalDestinationTimer(); 
 			}
 		}
 	}
 
-	private void UpdateGoalDestination() {
+	private void UpdateGoalDestinationTimer() {
 		if (timer.x > 0) timer.x -= Time.deltaTime;
 		else {
 			timer.x = timer.y;
@@ -78,40 +79,29 @@ public class GameManager : MonoBehaviour
 		}	
 	}
 	
+	private void UpdateGoalDestinationMouseClick() {
+		Vector3 mousePos = Input.mousePosition;
+		mousePos.z = Camera.main.nearClipPlane;
+		mousePos = Camera.main.ScreenToWorldPoint(mousePos);
+		
+		Vector3 nearestCellAtMousePosition = mGridManager.currentFlowField.GetCellFromWorldPosition(mousePos).worldPosition;
+		mGridManager.UpdateFlowField(nearestCellAtMousePosition);
+	}
+	
 	private void SpawnUnits(bool isSpawnUnits) {
-		if (isSpawnUnits && mUnitList.Count < unitSpawnAmount.y) {
+		if (isSpawnUnits && unitList.Count < unitSpawnAmount.y) {
 			for (int i = 0; i < unitSpawnAmount.x; i++) {
-				if (mUnitList.Count >= unitSpawnAmount.y) return;
+				if (unitList.Count >= unitSpawnAmount.y) return;
 				GameObject unit = Instantiate(mUnitPrefab);
 				unit.transform.position = mGridManager.currentFlowField.GetCellFromWorldPosition(GetRandomPositionWithinTheGrid()).worldPosition;
 				unit.transform.localScale = Vector3.one * mGridManager.cellRadius;
 			}
 		}
 	}
-
-	private void MoveCamera() {
-		Vector3 cameraPos = Camera.main.transform.position;
-		if (Input.GetKey(KeyCode.W))	  cameraPos.z += 1.0f;
-		else if (Input.GetKey(KeyCode.A)) cameraPos.x -= 1.0f;
-		else if (Input.GetKey(KeyCode.S)) cameraPos.z -= 1.0f;
-		else if (Input.GetKey(KeyCode.D)) cameraPos.x += 1.0f;
-		
-		cameraPos.x = Mathf.Clamp(cameraPos.x, -screenWidth, screenWidth);
-		cameraPos.z = Mathf.Clamp(cameraPos.z, -screenHeight, screenHeight);
-		Camera.main.transform.position = cameraPos;
-	}
 	
-	// GETTERS
-	public List<Unit> GetUnitList(){return mUnitList;} 
-	public int GetUnitListSize(){return mUnitList.Count;}
-	public Vector3 GetRandomPositionWithinTheGrid() {
-		Vector3 spawnLoc = new Vector3(
-		Random.Range(mGridManager.gridOffset.x, mGridManager.gridSize.x + mGridManager.gridOffset.x), 0f,
-		Random.Range(mGridManager.gridOffset.y, mGridManager.gridSize.y + mGridManager.gridOffset.y));
-		return spawnLoc;
+	private Vector3 GetRandomPositionWithinTheGrid() {
+		int randomXIndex = Random.Range(1, mGridManager.gridSize.x - 1);
+		int randomYIndex = Random.Range(1, mGridManager.gridSize.y - 1);
+		return mGridManager.currentFlowField.grid[randomXIndex, randomYIndex].worldPosition;
 	}
-	
-	// SETTERS
-	public void AddUnitToUnitList(Unit unit){mUnitList.Add(unit);}
-	public void RemoveUnitFromUnitList(Unit unit){mUnitList.Remove(unit);}
 }

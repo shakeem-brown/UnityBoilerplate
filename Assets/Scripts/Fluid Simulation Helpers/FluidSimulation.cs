@@ -26,7 +26,7 @@ public class FluidSimulation
 		fluidDensity = _fluidDensity;
 	}
 	
-	public void ApplyFluidSimulation() {
+	public void UpdateFluidSimulation() {
 		CalculateVelocityField();
         CalculatePressureField();
         UpdateVelocityField();

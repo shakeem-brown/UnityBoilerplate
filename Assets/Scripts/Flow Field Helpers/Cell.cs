@@ -32,27 +32,32 @@ public class Cell
 	
 	// Constructor
 	public Cell(Vector3 worldPos, Vector2Int index) {
+		// generic values init
 		worldPosition = worldPos;
 		gridIndex = index;
 		velocity = Vector2.zero;
 		
+		// neighbor info init
 		neighborCells = new List<Cell>();
 		northCell = null;
 		eastCell = null;
 		southCell = null;
 		westCell = null;
 		
+		// visualization values init
 		gameObject = null;
 		vectorColor = Color.white;
 		
+		// Pathfinding values init
 		unit = null;
 		cost = 1;
 		bestCost = ushort.MaxValue;
 		
-		density = 0.8f; // cannot == 0
-		pressure = 0.6f;
-		pressureGradient = new Vector2(1 , 1);
-		viscosity = 15f;
+		// Fluid Simulation values init
+		density = 1.0f; // cannot == 0
+		pressure = 0.8f;
+		pressureGradient = new Vector2(1 , 0.2f);
+		viscosity = 7.5f;
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y).normalized; }

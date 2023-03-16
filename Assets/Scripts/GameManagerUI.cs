@@ -5,36 +5,57 @@ using UnityEngine.UI;
 
 public class GameManagerUI : MonoBehaviour
 {
-	[SerializeField] private GameManager mGM;
+	[HideInInspector] [SerializeField] private GameManager mGM;
+	[HideInInspector] [SerializeField] private GridManagerDebug mGridManagerDebug;
 	
 	// FPS
-    [SerializeField] private Text mFPSText;
+    [HideInInspector] [SerializeField] private Text fpsText;
 	private string fpsIntro;
 	private int lastFrameIndex;
 	private float[] frameDeltaTimeArray = new float[50];
 	
 	// Unit Count
-    [SerializeField] private Text mUnitCountText;
-	
+    [HideInInspector] [SerializeField] private Text unitCountText;
 	private string unitCountIntro;
 	
+	// Buttons
+	[HideInInspector] [SerializeField] private Button gridButton;
+	[HideInInspector] [SerializeField] private Button flowFieldButton;
+	[HideInInspector] [SerializeField] private Button fluidSimulationButton;
+	
+	
     private void Start() { 
-		fpsIntro = mFPSText.text; 
-		unitCountIntro = mUnitCountText.text; 
+		fpsIntro = fpsText.text; 
+		unitCountIntro = unitCountText.text; 
+		
+		gridButton.onClick.AddListener(OnGridButtonClick);
+		flowFieldButton.onClick.AddListener(OnFlowFieldButtonClick);
+		fluidSimulationButton.onClick.AddListener(OnFluidSimulationButtonClick);
+		
 		StartCoroutine(UpdateGameUI());
 	}
 	
-	private IEnumerator UpdateGameUI()
-    {
-        while (true)
-        {
+	private void OnGridButtonClick() {
+		mGridManagerDebug.ToogleGridVisibility();
+	}
+	
+	private void OnFlowFieldButtonClick() {
+		mGridManagerDebug.ToogleFlowFieldDisplay();
+	}
+	
+	private void OnFluidSimulationButtonClick() {
+		mGM.isFluidSimulationActive = !mGM.isFluidSimulationActive;
+	}
+	
+	private IEnumerator UpdateGameUI() {
+        while (true) {
 			// FPS
 			frameDeltaTimeArray[lastFrameIndex] = Time.deltaTime;
 			lastFrameIndex = (lastFrameIndex + 1) % frameDeltaTimeArray.Length;
-            mFPSText.text = fpsIntro + Mathf.RoundToInt(GetFPS()).ToString();
+            fpsText.text = fpsIntro + Mathf.RoundToInt(GetFPS()).ToString();
 			
 			// Unit Count
-			mUnitCountText.text = unitCountIntro + mGM.GetUnitListSize();
+			unitCountText.text = unitCountIntro + mGM.unitList.Count;
 			
             yield return new WaitForSeconds(0.2f);
         }

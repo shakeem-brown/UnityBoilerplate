@@ -9,7 +9,7 @@ public class Unit : MonoBehaviour
 	public float speed { get; private set; }
 	
 	private void Start() {
-		FindObjectOfType<GameManager>().AddUnitToUnitList(this);
+		FindObjectOfType<GameManager>().unitList.Add(this);
 		color = new Color(Random.value, Random.value, Random.value);
 		GetComponent<Renderer>().material.SetColor("_Color", color);
 		speed = Random.Range(1f, 10f);
