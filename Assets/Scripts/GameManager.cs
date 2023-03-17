@@ -13,7 +13,6 @@ public class GameManager : MonoBehaviour
 	public List<Unit> unitList { get; private set; }
 	[HideInInspector] public bool isFluidSimulationActive;
 
-
     private void Awake() {
 		mGridManager = GetComponent<GridManager>();
         unitList = new List<Unit>();
@@ -27,25 +26,19 @@ public class GameManager : MonoBehaviour
 		Camera.main.orthographicSize = mGridManager.gridSize.y * mGridManager.cellRadius;
 		
 		mGridManager.InitalizeFlowField();
-		SpawnUnits(true); // Spawning the units at the start of the game
 	}
 
     private void Update() { 
 		if (Input.GetMouseButton(0)) UpdateGoalDestinationMouseClick(); 
-		UpdateFluidSimulation();
-	}
-
-    private void FixedUpdate() { GameLoop(); }
-	
-	private void UpdateFluidSimulation() {
 		if (isFluidSimulationActive) {
 			if (mGridManager.currentFluidSimulation != null) mGridManager.currentFluidSimulation.UpdateFluidSimulation();
 		}
 	}
+
+    private void FixedUpdate() { GameLoop(); }
 	
 	private void GameLoop() {
 		// game modifications
-		SpawnUnits(Input.GetKey(KeyCode.P));
 		UpdateUnitPosition();
 		
 		// scene management
@@ -63,10 +56,22 @@ public class GameManager : MonoBehaviour
 				
 				float unitSpeed = unit.speed;
 				if (nextCell.unit != null) unitSpeed *= 0.5f; // slow down
-				unit.transform.position += currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unitSpeed;
+				Vector3 newPosition = currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unitSpeed;
+				
+				// check if the cell is a border cell and prevent the cell from leaving the grid
+				if (currentCell.CheckIfBorderCell()) {
+					if (currentCell.northCell == null) newPosition.z += -0.1f;
+					if (currentCell.eastCell == null) newPosition.x += -0.1f;
+					if (currentCell.southCell == null) newPosition.z += 0.1f;
+					if (currentCell.westCell == null) newPosition.x += 0.1f;
+				}
+				
+				unit.transform.position += newPosition;
 				
 				// if a unit reaches the goal cell then start a timer to change the destinationCell
-				if (currentCell == mGridManager.currentFlowField.destinationCell) UpdateGoalDestinationTimer(); 
+				if (!isFluidSimulationActive) {
+					if (currentCell == mGridManager.currentFlowField.destinationCell) UpdateGoalDestinationTimer(); 
+				}
 			}
 		}
 	}
@@ -88,10 +93,17 @@ public class GameManager : MonoBehaviour
 		mGridManager.UpdateFlowField(nearestCellAtMousePosition);
 	}
 	
-	private void SpawnUnits(bool isSpawnUnits) {
-		if (isSpawnUnits && unitList.Count < unitSpawnAmount.y) {
-			for (int i = 0; i < unitSpawnAmount.x; i++) {
-				if (unitList.Count >= unitSpawnAmount.y) return;
+	private Vector3 GetRandomPositionWithinTheGrid() {
+		int randomXIndex = Random.Range(1, mGridManager.gridSize.x - 1);
+		int randomYIndex = Random.Range(1, mGridManager.gridSize.y - 1);
+		return mGridManager.currentFlowField.grid[randomXIndex, randomYIndex].worldPosition;
+	}
+	
+	// Accessors
+	public void SpawnUnit(int numOfUnitsToSpawn) {
+		if (unitList.Count < unitSpawnAmount.y) {
+			for (int i = 0; i < numOfUnitsToSpawn; i++) {
+				if (unitList.Count >= unitSpawnAmount.y) return; // safety check
 				GameObject unit = Instantiate(mUnitPrefab);
 				unit.transform.position = mGridManager.currentFlowField.GetCellFromWorldPosition(GetRandomPositionWithinTheGrid()).worldPosition;
 				unit.transform.localScale = Vector3.one * mGridManager.cellRadius;
@@ -99,9 +111,15 @@ public class GameManager : MonoBehaviour
 		}
 	}
 	
-	private Vector3 GetRandomPositionWithinTheGrid() {
-		int randomXIndex = Random.Range(1, mGridManager.gridSize.x - 1);
-		int randomYIndex = Random.Range(1, mGridManager.gridSize.y - 1);
-		return mGridManager.currentFlowField.grid[randomXIndex, randomYIndex].worldPosition;
+	public void RemoveUnit(int numOfUnitsToRemove) {
+		if (unitList.Count > 0) {
+			for (int i = 0; i < numOfUnitsToRemove; i++) {
+				if (unitList.Count == 0) return; // saftey check
+				int randomIndex = Random.Range(0, unitList.Count - 1);
+				Unit unit = unitList[randomIndex];
+				Destroy(unit.gameObject);
+				unitList.Remove(unit);
+			}
+		}
 	}
 }

@@ -23,6 +23,11 @@ public class GameManagerUI : MonoBehaviour
 	[HideInInspector] [SerializeField] private Button flowFieldButton;
 	[HideInInspector] [SerializeField] private Button fluidSimulationButton;
 	
+	[HideInInspector] [SerializeField] private Button spawn1UnitButton;
+	[HideInInspector] [SerializeField] private Button remove1UnitButton;
+	[HideInInspector] [SerializeField] private Button spawn50UnitButton;
+	[HideInInspector] [SerializeField] private Button remove50UnitButton;
+	
 	
     private void Start() { 
 		fpsIntro = fpsText.text; 
@@ -32,20 +37,21 @@ public class GameManagerUI : MonoBehaviour
 		flowFieldButton.onClick.AddListener(OnFlowFieldButtonClick);
 		fluidSimulationButton.onClick.AddListener(OnFluidSimulationButtonClick);
 		
+		spawn1UnitButton.onClick.AddListener(OnSpawnOneUnitButtonClick);
+		remove1UnitButton.onClick.AddListener(OnRemoveOneUnitButtonClick);
+		spawn50UnitButton.onClick.AddListener(OnSpawnFiftyUnitButtonClick);
+		remove50UnitButton.onClick.AddListener(OnRemoveFiftyUnitButtonClick);
+		
 		StartCoroutine(UpdateGameUI());
 	}
 	
-	private void OnGridButtonClick() {
-		mGridManagerDebug.ToogleGridVisibility();
-	}
-	
-	private void OnFlowFieldButtonClick() {
-		mGridManagerDebug.ToogleFlowFieldDisplay();
-	}
-	
-	private void OnFluidSimulationButtonClick() {
-		mGM.isFluidSimulationActive = !mGM.isFluidSimulationActive;
-	}
+	private void OnGridButtonClick() { mGridManagerDebug.ToogleGridVisibility(); }
+	private void OnFlowFieldButtonClick() { mGridManagerDebug.ToogleFlowFieldDisplay(); }
+	private void OnFluidSimulationButtonClick() { mGM.isFluidSimulationActive = !mGM.isFluidSimulationActive; }
+	private void OnSpawnOneUnitButtonClick () { mGM.SpawnUnit(1); }
+	private void OnRemoveOneUnitButtonClick () { mGM.RemoveUnit(1); }
+	private void OnSpawnFiftyUnitButtonClick () { mGM.SpawnUnit(50); }
+	private void OnRemoveFiftyUnitButtonClick () { mGM.RemoveUnit(50); }
 	
 	private IEnumerator UpdateGameUI() {
         while (true) {
