@@ -11,7 +11,6 @@ public class GameManager : MonoBehaviour
 	
 	public GridManager mGridManager { get; private set; }
 	public List<Unit> unitList { get; private set; }
-	[HideInInspector] public bool isFluidSimulationActive;
 
     private void Awake() {
 		// define helpful/ important variables
@@ -36,9 +35,7 @@ public class GameManager : MonoBehaviour
 		if (Input.GetMouseButton(0)) UpdateGoalDestinationMouseClick(); 
 		
 		// activates the current field to simulate fluid if the bool: isFluidSimulationActive is true
-		if (isFluidSimulationActive) {
-			if (mGridManager.currentFluidSimulation != null) mGridManager.currentFluidSimulation.UpdateFluidSimulation();
-		}
+		if (mGridManager.isFluidSimulationActive) mGridManager.UpdateFluidSimulation();
 	}
 
     private void FixedUpdate() { GameLoop(); }
@@ -56,24 +53,17 @@ public class GameManager : MonoBehaviour
 		if (mGridManager.currentFlowField != null) {
 			foreach (Unit unit in unitList) {
 				Cell currentCell = mGridManager.currentFlowField.GetCellFromWorldPosition(unit.transform.position);
+				unit.SetCurrentCell(currentCell);
+				
 				Cell nextCell = mGridManager.currentFlowField.GetCellFromWorldPosition(currentCell.worldPosition + currentCell.GetVector3Velocity());
 				
-				// do nove to next cell if the next cell is occuiped
-				if (nextCell.unit != null && nextCell.unit != unit) continue;
-				unit.SetCurrentCell(currentCell);
-			
-				Vector3 newPosition = currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unit.speed;
-				// check if the cell is a border cell and prevent the cell from leaving the grid
-				if (currentCell.CheckIfBorderCell()) {
-					if (currentCell.northCell == null) newPosition.z += -0.1f;
-					if (currentCell.eastCell == null) newPosition.x += -0.1f;
-					if (currentCell.southCell == null) newPosition.z += 0.1f;
-					if (currentCell.westCell == null) newPosition.x += 0.1f;
-				}
-				unit.transform.position += newPosition;
+				Vector3 newPosition = unit.GetSeparationOffset(nextCell); // offset the new position from collision with other units
+				newPosition += currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unit.speed; // apply the current cell velocity
+				newPosition += unit.GetBorderOffset(); // apply the border offset when colliding with the border
+				unit.transform.position += newPosition; // update the unit position
 				
 				// checks if a unit reaches the goal cell then start a timer to change the destinationCell
-				if (!isFluidSimulationActive) {
+				if (!mGridManager.isFluidSimulationActive) {
 					if (currentCell == mGridManager.currentFlowField.destinationCell) UpdateGoalDestinationTimer(); 
 				}
 			}

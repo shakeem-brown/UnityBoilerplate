@@ -26,9 +26,9 @@ public class Cell
 	
 	// Fluid Simulation Values
 	public float density;
-	public float pressure;
-	public Vector2 pressureGradient;
-	public float viscosity;
+	public float viscosity { get; private set; }
+	public float divergence;
+	public Vector2 densityGradient;
 	
 	// Constructor
 	public Cell(Vector3 worldPos, Vector2Int index) {
@@ -54,10 +54,10 @@ public class Cell
 		bestCost = ushort.MaxValue;
 		
 		// Fluid Simulation values init
-		density = 1.0f; // cannot == 0
-		pressure = 0.8f;
-		pressureGradient = new Vector2(1 , 0.2f);
+		density = 1.0f; // cannot == 0 
 		viscosity = 7.5f;
+		divergence = 0.5f;
+		densityGradient = new Vector2(1 , 0.2f);
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y).normalized; }

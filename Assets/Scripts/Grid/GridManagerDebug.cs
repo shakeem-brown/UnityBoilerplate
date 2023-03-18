@@ -96,4 +96,20 @@ public class GridManagerDebug : MonoBehaviour
 			line.transform.parent = mGridHolder;
 		}
 	}
+	
+	public void UpdateFluidSimulationColorDiffusion() {
+		foreach (Cell cell in mGridManager.currentFlowField.grid) {
+			if (cell.gameObject == null) continue;
+			if (cell.gameObject.GetComponent<LineRenderer>() == null) continue;
+			VisualizeDiffusion(cell);
+		}
+	}
+	
+	public void VisualizeDiffusion(Cell cell)
+	{
+		LineRenderer lineRenderer = cell.gameObject.GetComponent<LineRenderer>();
+		Color diffusedColor = lineRenderer.material.color;
+		diffusedColor = Color.Lerp(Color.white, Color.blue, Mathf.Clamp01((cell.density * cell.density) - cell.velocity.sqrMagnitude));
+		lineRenderer.material.color = diffusedColor;
+	}
 }

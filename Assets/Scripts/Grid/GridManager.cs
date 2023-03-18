@@ -14,6 +14,7 @@ public class GridManager : MonoBehaviour
 	[Min(0)] public float speedDamping;
 	[Min(1)] public int pressureIterations;
 	public Vector2 fluidDensity;
+	[HideInInspector] public bool isFluidSimulationActive;
 	
     public FlowField currentFlowField { get; private set; }
     public FluidSimulation currentFluidSimulation { get; private set; }
@@ -47,4 +48,9 @@ public class GridManager : MonoBehaviour
 			mGridManagerDebug.currentFlowField = currentFlowField;
         }
     }
+	
+	public void UpdateFluidSimulation() {
+		currentFluidSimulation.UpdateFluidSimulation();
+		mGridManagerDebug.UpdateFluidSimulationColorDiffusion();
+	}
 }

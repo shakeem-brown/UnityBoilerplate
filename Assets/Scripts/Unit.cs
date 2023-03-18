@@ -8,11 +8,59 @@ public class Unit : MonoBehaviour
 	public Color color { get; private set; }
 	public float speed { get; private set; }
 	
+	private const float OFFSET = 0.01f;
+	
 	private void Start() {
 		FindObjectOfType<GameManager>().unitList.Add(this);
-		color = new Color(Random.value, Random.value, Random.value);
+		//color = new Color(Random.value, Random.value, Random.value);
+		color = Color.black;
 		GetComponent<Renderer>().material.SetColor("_Color", color);
 		speed = Random.Range(5f, 10f);
+	}
+	
+	public Vector3 GetBorderOffset() {
+		Vector3 offset = Vector3.zero;
+		
+		// check if the cell is a border cell and prevent the cell from leaving the grid by applying the offset
+		if (cell != null) {
+			if (cell.CheckIfBorderCell()) {
+				if (cell.northCell == null) offset.z += -OFFSET;
+				if (cell.eastCell == null) offset.x += -OFFSET;
+				if (cell.southCell == null) offset.z += OFFSET;
+				if (cell.westCell == null) offset.x += OFFSET;
+			}
+		}
+		return offset;
+	}
+	
+	// calculates the separation offset so that the unit can smoothly move away from the unit on the nextCell if that cell is occuiped
+	public Vector3 GetSeparationOffset(Cell nextCell) {
+		
+		Vector3 offset = Vector3.zero;
+		
+		if (cell != null) {
+			// handles what to do if the next cell is occupied by another unit
+			if (nextCell.unit != null && nextCell.unit != this) { 
+			
+				foreach (Cell neighbor in nextCell.neighborCells) {
+					Vector2Int neighborGridIndex = neighbor.gridIndex;
+					
+					if (neighborGridIndex.y + 1 == cell.gridIndex.y) {
+						offset.z += OFFSET; // North
+						if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // North East	
+						else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // North West
+					}
+					else if (neighborGridIndex.y - 1 == cell.gridIndex.y) {
+						offset.z += -OFFSET; // South
+						if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // South East	
+						else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // South West
+					}
+					else if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // East	
+					else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // West
+				}
+			}
+		}
+		return offset;
 	}
 	
 	public void SetCurrentCell(Cell newCurrentCell) {
