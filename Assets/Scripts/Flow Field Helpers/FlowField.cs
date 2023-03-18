@@ -29,12 +29,15 @@ public class FlowField
 				grid[x, y] = new Cell(worldPosition, new Vector2Int(x, y));
 			}
 		}
-		
-		// add neighborCells to neighborCells list for each cell
+		GenerateNeighbors();
+	}
+	
+	// adds neighborCells to each cell's neighborCells list
+	public void GenerateNeighbors() {
 		foreach (Cell cell in grid) {
 			for (int x = -1; x <= 1; x++) {
 				for (int y = -1; y <= 1; y++) {
-					// Calculate the grid index of the adjacent cell
+					// calculates the grid index of the adjacent cell
 					Vector2Int neighborIndex = new Vector2Int(cell.gridIndex.x + x, cell.gridIndex.y + y);
 					neighborIndex.x = Mathf.Clamp(neighborIndex.x, 0, gridSize.x - 1);
 					neighborIndex.y = Mathf.Clamp(neighborIndex.y, 0, gridSize.y - 1);
@@ -43,6 +46,7 @@ public class FlowField
 					if (neighborIndex == cell.gridIndex) continue; // skip yourself
 					Cell neighborCell = grid[neighborIndex.x, neighborIndex.y];
 					
+					// sets the cardinal neighbor cells if they exist
 					if (x == 0 && y == 1) cell.northCell = neighborCell;
 					else if (x == 1 && y == 0) cell.eastCell = neighborCell;
 					else if (x == 0 && y == -1) cell.southCell = neighborCell;
@@ -54,20 +58,25 @@ public class FlowField
 		}
 	}
 	
-	// sets the inital cost for the terrain. Different terrain textures have more cost
-	// compared to smoother ones. The max cost is 255, and the minium cost for terrain.
-	// terrain cannot have 0 cost as it will be mistaken as the destination cell
+	// sets the inital cost for the terrain, Dev. pref each layer can have different cost values
+	// The max cost is 255, and the minium cost for terrain is 1. Terrain cannot have 0 
+	// cost as it will be mistaken as the destination cell. By default all cost values are set
+	// to 1 until the cost field possibly sets it to  some other value
 	public void GenerateCostField() {
-		Vector3 cellHalfExtents = Vector3.one * cellRadius;
-		int terrainMask = LayerMask.GetMask("Impassible", "Rough");
+		int terrainMask = LayerMask.GetMask("Impassable", "Rough");
 		foreach (Cell currentCell in grid) {
-			Collider[] terrain = Physics.OverlapBox(currentCell.worldPosition, cellHalfExtents, Quaternion.identity, terrainMask);
+			Collider[] terrain = Physics.OverlapBox(currentCell.worldPosition, Vector3.one * cellRadius, Quaternion.identity, terrainMask);
 			bool isIncreaseCost = false;
+			
+			// loop through the colliders on the grid and assign a cost value to every cell 
+			// within the confines of the collider via terrain's physics.overlap box
 			foreach (Collider collider in terrain) {
+				// this terrain is impassable
 				if (collider.gameObject.layer == 6) {
 					currentCell.IncreaseCost(byte.MaxValue); // set cost to max byte val == 255
 					continue;
 				}
+				// this terrain is rough
 				else if (!isIncreaseCost && collider.gameObject.layer == 7) {
 					currentCell.IncreaseCost(3);
 					isIncreaseCost = true;
@@ -79,12 +88,13 @@ public class FlowField
 	// generates the cost for each cell towards the destination cell where cells that are closer
 	// to the destination are lower then others further away from the destination
 	public void GenerateIntergrationField(Cell goalCell) {
-		// Reset all cells' costs and best costs
+		// reset all cells' pathfinding properties: unit, cost, & bestCost
 		foreach (Cell cell in grid) {
+			cell.unit = null;
 			cell.cost = 1;
 			cell.bestCost = ushort.MaxValue;
 		}
-		
+		// set the destination cell specific properties: cost/ bestCost == 0 & velocity == 0
 		destinationCell = goalCell;
 		destinationCell.cost = 0;
 		destinationCell.bestCost = 0;
@@ -93,6 +103,8 @@ public class FlowField
 		Queue<Cell> cellsToCheck = new Queue<Cell>();
 		cellsToCheck.Enqueue(destinationCell);
 		
+		// check through all the neighbors in the queue: cellsToCheck to find the best cost
+		// to help later generate a path
 		while (cellsToCheck.Count > 0) {
 			Cell currentCell = cellsToCheck.Dequeue();
 			foreach (Cell currentNeighbor in currentCell.neighborCells) {
@@ -119,6 +131,7 @@ public class FlowField
 		}
 	}
 	
+	// takes the difference between the cell indexs and converts them to a respective cell velocity that cordinates to a direction
 	private Vector2 CalculateCellVelocity(Vector2Int currentCellIndex, Vector2Int neighborCellIndex) {
 		Vector2Int diff = neighborCellIndex - currentCellIndex;
 		Vector2 cellVelocity = Vector2.zero;
@@ -137,10 +150,10 @@ public class FlowField
 			else if (diff.y == 1) cellVelocity = new Vector2(-1, 1); // north west
 			else if (diff.y == -1) cellVelocity = new Vector2(-1, -1); // south west
 		}
-		
 		return cellVelocity;
 	}
 	
+	// takes the world position and converts that position to the nearest cell
 	public Cell GetCellFromWorldPosition(Vector3 worldPosition) {
 		float xRatio = worldPosition.x / cellDiameter;
 		float yRatio = worldPosition.z / cellDiameter;
@@ -148,8 +161,7 @@ public class FlowField
 		yRatio -= gridOffset.y;
 		int x = Mathf.Clamp(Mathf.FloorToInt(xRatio), 0, gridSize.x - 1);
 		int y = Mathf.Clamp(Mathf.FloorToInt(yRatio), 0, gridSize.y - 1);
-
-		return grid[x, y];
+		return grid[x, y]; // return that cell at that index
 	}
 	
 	// returns the neighbor cell the current cell will move to
