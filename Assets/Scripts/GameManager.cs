@@ -25,17 +25,6 @@ public class GameManager : MonoBehaviour
 		cameraPos.z = mGridManager.gridSize.y * mGridManager.cellRadius;
 		Camera.main.transform.position = cameraPos;
 		Camera.main.orthographicSize = mGridManager.gridSize.y * mGridManager.cellRadius;
-		
-		// init the flow field
-		mGridManager.InitalizeFlowField();
-	}
-
-    private void Update() { 
-		// manipulates the field if the right mouse button is pressed
-		if (Input.GetMouseButton(0)) UpdateGoalDestinationMouseClick(); 
-		
-		// activates the current field to simulate fluid if the bool: isFluidSimulationActive is true
-		if (mGridManager.isFluidSimulationActive) mGridManager.UpdateFluidSimulation();
 	}
 
     private void FixedUpdate() { GameLoop(); }
@@ -50,12 +39,12 @@ public class GameManager : MonoBehaviour
 	}
 	
 	private void UpdateUnitPosition() {
-		if (mGridManager.currentFlowField != null) {
+		if (mGridManager.flowField != null) {
 			foreach (Unit unit in unitList) {
-				Cell currentCell = mGridManager.currentFlowField.GetCellFromWorldPosition(unit.transform.position);
+				Cell currentCell = mGridManager.vectorField.GetCellFromWorldPosition(unit.transform.position);
 				unit.SetCurrentCell(currentCell);
 				
-				Cell nextCell = mGridManager.currentFlowField.GetCellFromWorldPosition(currentCell.worldPosition + currentCell.GetVector3Velocity());
+				Cell nextCell = mGridManager.vectorField.GetCellFromWorldPosition(currentCell.worldPosition + currentCell.GetVector3Velocity());
 				
 				Vector3 newPosition = unit.GetSeparationOffset(nextCell); // offset the new position from collision with other units
 				newPosition += currentCell.GetVector3Velocity() * Time.fixedDeltaTime * unit.speed; // apply the current cell velocity
@@ -63,61 +52,29 @@ public class GameManager : MonoBehaviour
 				unit.transform.position += newPosition; // update the unit position
 				
 				// checks if a unit reaches the goal cell then start a timer to change the destinationCell
-				if (!mGridManager.isFluidSimulationActive) {
-					if (currentCell == mGridManager.currentFlowField.destinationCell) UpdateGoalDestinationTimer(); 
-				}
+				if (currentCell == mGridManager.flowField.destinationCell) UpdateGoalDestinationTimer(); 
 			}
 		}
 	}
 	
-	// changes the goal node to a random non border cell position: GetRandomPositionWithinTheGrid()
+	// changes the goal node to a random non border cell: GetRandomCellWithinTheGrid()
 	private void UpdateGoalDestinationTimer() {
 		if (timer.x > 0) timer.x -= Time.deltaTime;
 		else {
 			timer.x = timer.y;
-			mGridManager.UpdateFlowField(GetRandomPositionWithinTheGrid());
+			mGridManager.UpdateFlowField(mGridManager.vectorField.GetRandomCellWithinTheGrid());
 		}	
 	}
 	
-	// changes the goal node to the nearest cell at the mouse position
-	private void UpdateGoalDestinationMouseClick() {
-		Vector3 mousePos = Input.mousePosition;
-		mousePos.z = Camera.main.nearClipPlane;
-		mousePos = Camera.main.ScreenToWorldPoint(mousePos);
-		Cell nearestCellAtMousePosition = mGridManager.currentFlowField.GetCellFromWorldPosition(mousePos);
-		
-		// check if the mouse clicked an area outside the grid or a border cell
-		if (nearestCellAtMousePosition.gridIndex.x - 1 < 0 ||
-			nearestCellAtMousePosition.gridIndex.y - 1 < 0 ||
-			nearestCellAtMousePosition.gridIndex.x + 1 > mGridManager.gridSize.x - 1 ||
-			nearestCellAtMousePosition.gridIndex.y + 1 > mGridManager.gridSize.y - 1) {
-				
-			float squareDist = (new Vector3(mousePos.x, 0, mousePos.z) - nearestCellAtMousePosition.worldPosition).sqrMagnitude;
-			float squareCellRadius = mGridManager.cellRadius * mGridManager.cellRadius;
-			
-			// check if the distance between the mousePos and the border cell position to confirm if the border cell was clicked
-			if (squareDist > squareCellRadius) return;
-		}
-		// sets the goal cell to the nearest cell at the mouse position
-		mGridManager.UpdateFlowField(nearestCellAtMousePosition.worldPosition);
-	}
-	
-	// gets a random non border cell via gridIndex and returns that cell's world position
-	private Vector3 GetRandomPositionWithinTheGrid() {
-		int randomXIndex = Random.Range(1, mGridManager.gridSize.x - 1);
-		int randomYIndex = Random.Range(1, mGridManager.gridSize.y - 1);
-		return mGridManager.currentFlowField.grid[randomXIndex, randomYIndex].worldPosition;
-	}
-	
 	/// Accessors
-	// spawns "numOfUnitsToSpawn" amount of units at a random non border cell on the grid: GetRandomPositionWithinTheGrid()
+	// spawns "numOfUnitsToSpawn" amount of units at a random non border cell on the grid: GetRandomCellWithinTheGrid()
 	// it to the grid's cell radius, when a unit is Instantiated it is already added to the game manager's unitList
 	public void SpawnUnit(int numOfUnitsToSpawn) {
 		if (unitList.Count < unitSpawnAmount.y) {
 			for (int i = 0; i < numOfUnitsToSpawn; i++) {
 				if (unitList.Count >= unitSpawnAmount.y) return; // safety check
 				GameObject unit = Instantiate(mUnitPrefab);
-				unit.transform.position = GetRandomPositionWithinTheGrid();
+				unit.transform.position = mGridManager.vectorField.GetRandomCellWithinTheGrid().worldPosition;
 				unit.transform.localScale = Vector3.one * mGridManager.cellRadius;
 			}
 		}

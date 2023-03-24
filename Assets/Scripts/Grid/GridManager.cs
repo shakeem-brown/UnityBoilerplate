@@ -14,43 +14,50 @@ public class GridManager : MonoBehaviour
 	[Min(0)] public float speedDamping;
 	[Min(1)] public int pressureIterations;
 	public Vector2 fluidDensity;
-	[HideInInspector] public bool isFluidSimulationActive;
 	
-    public FlowField currentFlowField { get; private set; }
-    public FluidSimulation currentFluidSimulation { get; private set; }
+    public VectorField vectorField { get; private set; }
+    public FlowField flowField { get; private set; }
+    public FluidSimulation fluidSimulation { get; private set; }
 	public Cell lastDestinationCell { get; private set; }
 	private GridManagerDebug mGridManagerDebug;
 	
-	public void InitalizeFlowField() {
-		// initalizing the flow field and generating the grid
-		currentFlowField = new FlowField(gridSize, gridOffset, cellRadius);
-		currentFlowField.GenerateGrid();
-		
-		// initalizing the fluid simulation
-		currentFluidSimulation = new FluidSimulation(currentFlowField, maxSpeed, speedDamping, pressureIterations, fluidDensity);
+	private void Start() {
+		vectorField = new VectorField(gridSize, gridOffset, cellRadius); // initalizing the vector field
+		flowField = new FlowField(vectorField); // initalizing the flow field
+		fluidSimulation = new FluidSimulation(vectorField, maxSpeed, speedDamping, pressureIterations, fluidDensity); // initalizing the fluid simulation
 		
 		// DEBUG
 		mGridManagerDebug = GetComponent<GridManagerDebug>();
+		mGridManagerDebug.vectorField = vectorField;
 		mGridManagerDebug.DrawGrid(gridSize, gridOffset, cellRadius, cellRadius * 2);
 	}
 	
-	public void UpdateFlowField(Vector3 goalPosition) {
-		Cell destinationCell = currentFlowField.GetCellFromWorldPosition(goalPosition);
+    private void Update() { 
+		if (Input.GetMouseButton(0)) { 
+			UpdateFlowField(vectorField.GetCellAtMouseClickPosition());
+		}
+		UpdateFluidSimulation();
+	}
+	
+	// accessors
+	public void UpdateFlowField(Cell destinationCell) {
+		if (destinationCell == null || !mGridManagerDebug.isFlowFieldActivated) return;
+		
 		bool isUpdateFlowField = destinationCell != lastDestinationCell || lastDestinationCell == null;
 		
         if (isUpdateFlowField) {
-			currentFlowField.GenerateCostField();
-			currentFlowField.GenerateIntergrationField(destinationCell);
-            currentFlowField.GenerateFlowField();
+			flowField.GenerateCostField();
+			flowField.GenerateIntergrationField(destinationCell);
+            flowField.GenerateFlowField();
             lastDestinationCell = destinationCell;
-			
-			// DEBUG
-			mGridManagerDebug.currentFlowField = currentFlowField;
+			mGridManagerDebug.flowField = flowField; // for DEBUG
         }
     }
 	
 	public void UpdateFluidSimulation() {
-		currentFluidSimulation.UpdateFluidSimulation();
-		mGridManagerDebug.UpdateFluidSimulationColorDiffusion();
+		if (!mGridManagerDebug.isFluidSimulationActive) return;
+		
+		fluidSimulation.UpdateFluidSimulation();
+		mGridManagerDebug.fluidSimulation = fluidSimulation; // for DEBUG
 	}
 }

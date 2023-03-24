@@ -47,7 +47,7 @@ public class GameManagerUI : MonoBehaviour
 	
 	private void OnGridButtonClick() { mGridManagerDebug.ToogleGridVisibility(); }
 	private void OnFlowFieldButtonClick() { mGridManagerDebug.ToogleFlowFieldDisplay(); }
-	private void OnFluidSimulationButtonClick() { mGM.mGridManager.isFluidSimulationActive = !mGM.mGridManager.isFluidSimulationActive; }
+	private void OnFluidSimulationButtonClick() { mGridManagerDebug.ToogleFluidSimulationDisplay(); }
 	private void OnSpawnOneUnitButtonClick () { mGM.SpawnUnit(1); }
 	private void OnRemoveOneUnitButtonClick () { mGM.RemoveUnit(1); }
 	private void OnSpawnFiftyUnitButtonClick () { mGM.SpawnUnit(50); }

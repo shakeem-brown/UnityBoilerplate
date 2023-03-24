@@ -6,57 +6,85 @@ using UnityEngine;
 public class GridManagerDebug : MonoBehaviour
 {
 	[HideInInspector] [SerializeField] private GameObject mLinePrefab;
-	[HideInInspector] [SerializeField] private Transform mCellHolder;
+	[HideInInspector] [SerializeField] private GameObject mCubePrefab;
 	[HideInInspector] [SerializeField] private Transform mGridHolder;
-	
-	public FlowField currentFlowField;
+	[HideInInspector] [SerializeField] private Transform mVectorHolder;
+    [HideInInspector] [SerializeField] private Transform mCubeHolder;
 	[HideInInspector] private GridManager mGridManager;
-	[HideInInspector] public bool isDebugActivated;
 	
-    private void Start() {
-        mGridManager = GetComponent<GridManager>();
-    }
+	public VectorField vectorField;
+	public FlowField flowField;
+	public FluidSimulation fluidSimulation;
+	public bool isFlowFieldActivated;
+	public bool isFluidSimulationActive;
+	
+    private void Start() { mGridManager = GetComponent<GridManager>(); }
 
-	private void Update() {
-		FlowFieldDisplay();
+	private void Update() { 
+		FlowFieldDisplay(); 
+		FluidSimulationDisplay();
 	}
 	
 	private void FlowFieldDisplay() {	
-		if (isDebugActivated) {
-			if (mGridManager == null || currentFlowField == null) return;
-			if (currentFlowField != mGridManager.currentFlowField) return;
-			DisplayAllCells();
+		if (isFlowFieldActivated) {
+			if (mGridManager == null || vectorField == null || flowField == null) return;
+			if (flowField != mGridManager.flowField) return;
+			
+			// Display all the flow field vectors
+			foreach (Cell currentCell in vectorField.grid) {
+				if (mVectorHolder.childCount < vectorField.grid.Length) DisplayLine(currentCell);
+				else currentCell.vector.GetComponent<LineRenderer>().SetPositions(new Vector3[] { currentCell.worldPosition, currentCell.worldPosition + currentCell.GetVector3Velocity() });
+			}
 		}
 	}
 	
-	private void ClearCellDisplay() {
-		foreach (Transform cell in mCellHolder) {
-			Destroy(cell.gameObject);
-		}
-	}
-
-	private void DisplayAllCells() {
-		foreach (Cell currentCell in currentFlowField.grid) {
-			if (mCellHolder.childCount < currentFlowField.grid.Length) DisplayCell(currentCell);
-			UpdateLineProperties(currentCell.gameObject, currentCell.worldPosition, currentCell.worldPosition + currentCell.GetVector3Velocity());
+	private void FluidSimulationDisplay() {
+		if (isFluidSimulationActive) {
+			if (mGridManager == null || vectorField == null || fluidSimulation == null) return;
+			if (fluidSimulation != mGridManager.fluidSimulation) return;
+			
+			foreach (Cell currentCell in vectorField.grid) {
+				if (mCubeHolder.childCount < vectorField.grid.Length) DisplayCube(currentCell);
+				else VisualizeDiffusion(currentCell);
+			}
 		}
 	}
 	
-	private void UpdateLineProperties(GameObject line, Vector3 lineStartPos, Vector3 lineEndPos) {
-		LineRenderer lineRend = line.GetComponent<LineRenderer>();
-		lineRend.SetPositions(new Vector3[] { lineStartPos, lineEndPos });
+	private void VisualizeDiffusion(Cell cell) {		
+		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
+		Color diffusedColor = meshRenderer.material.color;	
+		float num = (fluidSimulation.Pressure(cell) - fluidSimulation.Diffusion(cell)).magnitude;
+		//diffusedColor = new Color(cell.density - num, 0, 0);
+		diffusedColor.b = -cell.density + num;
+		meshRenderer.material.color = diffusedColor;
 	}
 	
-	private void DisplayCell(Cell cell)  {
-		GameObject line = CreateLine("vector", cell.worldPosition, 0.2f, cell.vectorColor, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
-		line.transform.parent = mCellHolder;
-		cell.gameObject = line;
+	private void DisplayLine(Cell cell) {
+		GameObject vector = CreateLine("vector", cell.worldPosition, 0.2f, cell.color, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
+		vector.transform.parent = mVectorHolder;
+		cell.vector = vector;
+	}
+	
+	private void DisplayCube(Cell cell) {
+		GameObject cube = CreateCube("cube", cell.worldPosition, Color.black);
+		cube.transform.parent = mCubeHolder;
+		cell.cube = cube;
+	}
+	
+	private GameObject CreateCube(string cubeName, Vector3 cubePos, Color cubeColor) {
+		GameObject cube = Instantiate(mCubePrefab);
+		cube.name = cubeName;
+		cube.transform.position = new Vector3(cubePos.x, -mGridManager.cellRadius * 2, cubePos.z);
+		cube.transform.localScale = new Vector3(mGridManager.cellRadius * 2, cube.transform.localScale.y, mGridManager.cellRadius * 2);
+		cube.GetComponent<MeshRenderer>().material.SetColor("_Color", cubeColor);
+		return cube;
 	}
 	
 	private GameObject CreateLine(string lineName, Vector3 linePos, float lineWidth, Color lineColor, Vector3 lineStartPos, Vector3 lineEndPos) {
 		GameObject line = Instantiate(mLinePrefab);
 		line.name = lineName;
 		line.transform.position = linePos;
+		line.transform.localScale = new Vector3(mGridManager.cellRadius * 2, line.transform.localScale.y, mGridManager.cellRadius * 2);
 		LineRenderer lineRend = line.GetComponent<LineRenderer>();
 		lineRend.startWidth = lineWidth;
 		lineRend.endWidth = lineWidth;
@@ -68,15 +96,16 @@ public class GridManagerDebug : MonoBehaviour
 	
 	// accessors
 	public void ToogleFlowFieldDisplay() { 
-		isDebugActivated = !isDebugActivated; 
-		if (!isDebugActivated) ClearCellDisplay();
+		isFlowFieldActivated = !isFlowFieldActivated; 
+		if (!isFlowFieldActivated) foreach (Transform cell in mVectorHolder) Destroy(cell.gameObject); 
 	}
 	
-	public void ToogleGridVisibility() {
-		foreach (Transform cell in mGridHolder) {
-			cell.gameObject.SetActive(!cell.gameObject.activeSelf);
-		}
+	public void ToogleFluidSimulationDisplay() {
+		isFluidSimulationActive = !isFluidSimulationActive;
+		if (!isFluidSimulationActive) foreach (Transform cell in mCubeHolder) Destroy(cell.gameObject); 
 	}
+	
+	public void ToogleGridVisibility() { foreach (Transform cell in mGridHolder) cell.gameObject.SetActive(!cell.gameObject.activeSelf); }
 	
 	public void DrawGrid(Vector2Int gridSize, Vector2Int gridOffset, float cellRadius, float cellDiameter) {
 		float gridWidth = gridSize.x * cellDiameter;
@@ -95,21 +124,5 @@ public class GridManagerDebug : MonoBehaviour
 			GameObject line = CreateLine("column", Vector3.zero, 0.1f, Color.black, startPos, endPos);
 			line.transform.parent = mGridHolder;
 		}
-	}
-	
-	public void UpdateFluidSimulationColorDiffusion() {
-		foreach (Cell cell in mGridManager.currentFlowField.grid) {
-			if (cell.gameObject == null) continue;
-			if (cell.gameObject.GetComponent<LineRenderer>() == null) continue;
-			VisualizeDiffusion(cell);
-		}
-	}
-	
-	public void VisualizeDiffusion(Cell cell)
-	{
-		LineRenderer lineRenderer = cell.gameObject.GetComponent<LineRenderer>();
-		Color diffusedColor = lineRenderer.material.color;
-		diffusedColor = Color.Lerp(Color.white, Color.blue, Mathf.Clamp01((cell.density * cell.density) - cell.velocity.sqrMagnitude));
-		lineRenderer.material.color = diffusedColor;
 	}
 }

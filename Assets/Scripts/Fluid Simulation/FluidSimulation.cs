@@ -4,21 +4,22 @@ using UnityEngine;
 
 public class FluidSimulation
 {
-	public FlowField flowField { get; private set; }
+	public VectorField vectorField { get; private set; }
 	public Vector2Int gridSize { get; private set; }
 	public float cellRadius { get; private set; }
 	public float cellDiameter { get; private set; }
+	public Cell pointerCell { get; private set; }
 	
 	public float maxSpeed { get; private set; }
 	public float damping { get; private set; }
 	public int densityIterations { get; private set; }
 	public Vector2 fluidDensity { get; private set; }
 	
-	public FluidSimulation(FlowField _flowField, float _maxSpeed, float _damping, int _densityIterations, Vector2 _fluidDensity) {
-		flowField = _flowField;
-		gridSize = flowField.gridSize;
-		cellRadius = flowField.cellRadius;
-		cellDiameter = flowField.cellDiameter;
+	public FluidSimulation(VectorField _vectorField, float _maxSpeed, float _damping, int _densityIterations, Vector2 _fluidDensity) {
+		vectorField = _vectorField;
+		gridSize = vectorField.gridSize;
+		cellRadius = vectorField.cellRadius;
+		cellDiameter = vectorField.cellDiameter;
 		
 		maxSpeed = _maxSpeed;
 		damping = _damping;
@@ -27,18 +28,18 @@ public class FluidSimulation
 	}
 	
 	public void UpdateFluidSimulation() {
-		CalculateVelocityField();
-        CalculateDensityField();
-        UpdateVelocityField();
+		NavierStokesEquation();
+        Advection();
+        IntegrateVelocityField();
 	}
 	
-	private void CalculateVelocityField() {
-		foreach (Cell cell in flowField.grid)
+	private void NavierStokesEquation() {
+		foreach (Cell cell in vectorField.grid)
 		{
 			// calculating the cell's velocity using Navier-Stokes equations to simulate a fluid like cell
-			cell.densityGradient = CalculateDensityGradient(cell);
-			Vector2 viscousForce = CalculateViscousForce(cell);
-			Vector2 acceleration = (cell.densityGradient + viscousForce) / cell.density;
+			cell.pressure = Pressure(cell);
+			Vector2 viscousForce = Diffusion(cell);
+			Vector2 acceleration = (cell.pressure + viscousForce) / cell.density;
 			
 			// update the velocity
 			cell.velocity += acceleration * Time.deltaTime;
@@ -52,17 +53,17 @@ public class FluidSimulation
 	}
 
 	// Calculates the Pressure Gradient by calculating the sum of the density differences between the current cell & all of its neighbors
-	private Vector2 CalculateDensityGradient(Cell cell) {
+	public Vector2 Pressure(Cell cell) {
 		float densityDiffSum = 0f;
 		foreach (Cell neighborCell in cell.neighborCells) {
 			float densityDiff = cell.density - neighborCell.density;
 			densityDiffSum += densityDiff;
 		}
-		return -densityDiffSum * (1f / cell.neighborCells.Count) * cell.densityGradient;
+		return -densityDiffSum * (1f / cell.neighborCells.Count) * cell.pressure;
 	}
 
-	// Calculates the Viscous Force by calculating the sum of the viscous forces between the current cell & all of its neighbors
-	private Vector2 CalculateViscousForce(Cell cell) {
+	// Calculates the Viscous Force (Diffusion) by calculating the sum of the viscous forces between the current cell & all of its neighbors
+	public Vector2 Diffusion(Cell cell) {
 		Vector2 viscousForce = Vector2.zero;
 		foreach (Cell neighborCell in cell.neighborCells) {
 			Vector2 velocityDiff = neighborCell.velocity - cell.velocity;
@@ -73,9 +74,9 @@ public class FluidSimulation
 		return viscousForce;
 	}
 	
-	private void CalculateDensityField() {
+	private void Advection() {
 		// calculating the cell's divergence
-		foreach (Cell cell in flowField.grid) {	
+		foreach (Cell cell in vectorField.grid) {	
 			// the cell is not a border cell
 			if (!cell.CheckIfBorderCell())
 			{
@@ -88,7 +89,7 @@ public class FluidSimulation
 		
 		// calculating the cell's new density 
 		for (int i = 0; i < densityIterations; i++) {
-			foreach (Cell cell in flowField.grid) {	
+			foreach (Cell cell in vectorField.grid) {	
 				// the cell is not a border cell
 				if (!cell.CheckIfBorderCell()) {
 					cell.density = (cell.divergence + 
@@ -97,9 +98,10 @@ public class FluidSimulation
 				}
 			}
 		}
-
+		
 		// updating the cell's velocity with the calculated density
-		foreach (Cell cell in flowField.grid) {	
+		// advection happens here
+		foreach (Cell cell in vectorField.grid) {	
 			// the cell is not a border cell
 			if (!cell.CheckIfBorderCell()) {
 				cell.velocity -= new Vector2(
@@ -109,8 +111,8 @@ public class FluidSimulation
 		}
 	}
 
-	private void UpdateVelocityField() {
-		foreach (Cell cell in flowField.grid) {	
+	private void IntegrateVelocityField() {
+		foreach (Cell cell in vectorField.grid) {	
 			// the cell is not a border cell
 			if (!cell.CheckIfBorderCell()) {
 				// defining velocity divergence based of the velocity diff

@@ -16,8 +16,9 @@ public class Cell
 	public Cell westCell;
 	
 	// visualization
-	public Color vectorColor;
-	public GameObject gameObject;
+	public Color color;
+	public GameObject vector;
+	public GameObject cube;
 	
 	// Pathfinding Values
 	public Unit unit;
@@ -28,7 +29,7 @@ public class Cell
 	public float density;
 	public float viscosity { get; private set; }
 	public float divergence;
-	public Vector2 densityGradient;
+	public Vector2 pressure;
 	
 	// Constructor
 	public Cell(Vector3 worldPos, Vector2Int index) {
@@ -45,8 +46,9 @@ public class Cell
 		westCell = null;
 		
 		// visualization values init
-		gameObject = null;
-		vectorColor = Color.white;
+		vector = null;
+		cube = null;
+		color = Color.white;
 		
 		// Pathfinding values init
 		unit = null;
@@ -57,7 +59,7 @@ public class Cell
 		density = 1.0f; // cannot == 0 
 		viscosity = 7.5f;
 		divergence = 0.5f;
-		densityGradient = new Vector2(1 , 0.2f);
+		pressure = new Vector2(1 , 0.2f);
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y).normalized; }
