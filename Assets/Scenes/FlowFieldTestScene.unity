@@ -691,10 +691,10 @@ MonoBehaviour:
   gridSize: {x: 25, y: 25}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
-  maxSpeed: 1
-  speedDamping: 0.2
-  pressureIterations: 34
-  fluidDensity: {x: 1, y: 1}
+  gravitationalConstant: -9.81
+  fluidDensity: 1
+  overrelaxation: 1.9
+  iterations: 10
 --- !u!4 &424040254
 Transform:
   m_ObjectHideFlags: 0

@@ -8,120 +8,103 @@ public class FluidSimulation
 	public Vector2Int gridSize { get; private set; }
 	public float cellRadius { get; private set; }
 	public float cellDiameter { get; private set; }
-	public Cell pointerCell { get; private set; }
 	
-	public float maxSpeed { get; private set; }
-	public float damping { get; private set; }
-	public int densityIterations { get; private set; }
-	public Vector2 fluidDensity { get; private set; }
+	public float gravitationalConstant { get; private set; }
+	public float fluidDensity { get; private set; }
+	public float overrelaxation { get; private set; }
+	public int iterations { get; private set; }
 	
-	public FluidSimulation(VectorField _vectorField, float _maxSpeed, float _damping, int _densityIterations, Vector2 _fluidDensity) {
+	public FluidSimulation(VectorField _vectorField, float _gravitationalConstant, float _fluidDensity, float _overrelaxation, int _iterations) {
 		vectorField = _vectorField;
 		gridSize = vectorField.gridSize;
 		cellRadius = vectorField.cellRadius;
 		cellDiameter = vectorField.cellDiameter;
 		
-		maxSpeed = _maxSpeed;
-		damping = _damping;
-		densityIterations = _densityIterations;
+		gravitationalConstant = _gravitationalConstant;
 		fluidDensity = _fluidDensity;
+		overrelaxation = _overrelaxation;
+		iterations = _iterations;
 	}
 	
 	public void UpdateFluidSimulation() {
-		NavierStokesEquation();
-        Advection();
-        IntegrateVelocityField();
+		IntegrateVelocityField();
+		SolveIncompressibility();
+		IntegrateVelocityAdvection();
 	}
 	
-	private void NavierStokesEquation() {
-		foreach (Cell cell in vectorField.grid)
-		{
-			// calculating the cell's velocity using Navier-Stokes equations to simulate a fluid like cell
-			cell.pressure = Pressure(cell);
-			Vector2 viscousForce = Diffusion(cell);
-			Vector2 acceleration = (cell.pressure + viscousForce) / cell.density;
-			
-			// update the velocity
-			cell.velocity += acceleration * Time.deltaTime;
-
-			// clamp velocity
-			if (cell.velocity.magnitude > maxSpeed) cell.velocity = cell.velocity.normalized * maxSpeed;
-
-			// damping the velocity
-			cell.velocity *= 1f - damping * Time.deltaTime;
-		}
-	}
-
-	// Calculates the Pressure Gradient by calculating the sum of the density differences between the current cell & all of its neighbors
-	public Vector2 Pressure(Cell cell) {
-		float densityDiffSum = 0f;
-		foreach (Cell neighborCell in cell.neighborCells) {
-			float densityDiff = cell.density - neighborCell.density;
-			densityDiffSum += densityDiff;
-		}
-		return -densityDiffSum * (1f / cell.neighborCells.Count) * cell.pressure;
-	}
-
-	// Calculates the Viscous Force (Diffusion) by calculating the sum of the viscous forces between the current cell & all of its neighbors
-	public Vector2 Diffusion(Cell cell) {
-		Vector2 viscousForce = Vector2.zero;
-		foreach (Cell neighborCell in cell.neighborCells) {
-			Vector2 velocityDiff = neighborCell.velocity - cell.velocity;
-			float dist = Vector3.Distance(cell.worldPosition, neighborCell.worldPosition);
-
-			viscousForce += cell.viscosity * velocityDiff / dist;
-		}
-		return viscousForce;
-	}
-	
-	private void Advection() {
-		// calculating the cell's divergence
-		foreach (Cell cell in vectorField.grid) {	
-			// the cell is not a border cell
-			if (!cell.CheckIfBorderCell())
-			{
-				cell.divergence = -0.5f * (
-					(cell.eastCell.velocity.x - cell.westCell.velocity.x) / cellDiameter +
-					(cell.northCell.velocity.y - cell.southCell.velocity.y) / cellDiameter
-				);
-			}
-		}
-		
-		// calculating the cell's new density 
-		for (int i = 0; i < densityIterations; i++) {
-			foreach (Cell cell in vectorField.grid) {	
-				// the cell is not a border cell
-				if (!cell.CheckIfBorderCell()) {
-					cell.density = (cell.divergence + 
-						cell.eastCell.density + cell.westCell.density +
-						cell.northCell.density + cell.southCell.density) / 4f;
-				}
-			}
-		}
-		
-		// updating the cell's velocity with the calculated density
-		// advection happens here
-		foreach (Cell cell in vectorField.grid) {	
-			// the cell is not a border cell
-			if (!cell.CheckIfBorderCell()) {
-				cell.velocity -= new Vector2(
-					(cell.eastCell.density - cell.westCell.density) * 0.5f / cellDiameter,
-					(cell.northCell.density - cell.southCell.density) * 0.5f / cellDiameter);
-			}
-		}
-	}
-
 	private void IntegrateVelocityField() {
+		foreach (Cell cell in vectorField.grid) {
+			if (cell.CheckIfBorderCell() || cell.CheckIfImpassible()) continue;
+			cell.velocity = Vector2.down * Time.deltaTime * gravitationalConstant;
+		}
+	}
+	
+	private void SolveIncompressibility() {
 		foreach (Cell cell in vectorField.grid) {	
-			// the cell is not a border cell
-			if (!cell.CheckIfBorderCell()) {
-				// defining velocity divergence based of the velocity diff
-				float velocityDivergence = ((cell.eastCell.velocity.x - cell.westCell.velocity.x) +
-					(cell.northCell.velocity.y - cell.southCell.velocity.y)) / (2f * cellDiameter);
-				
-				// updating the cell's velocity according to the calculated velocity divergence
-				cell.velocity += (velocityDivergence * cellRadius * fluidDensity * Time.deltaTime);
+			if (cell.CheckIfBorderCell() || cell.CheckIfImpassible()) continue;
+			
+			// calculates the divergence for each non border/ non impassible cell
+			cell.divergence = -0.5f * (
+				(cell.eastCell.velocity.x - cell.westCell.velocity.x) / cellDiameter +
+				(cell.northCell.velocity.y - cell.southCell.velocity.y) / cellDiameter
+			) * overrelaxation;
+		}
+		
+		// using the gaus sidel method to find a pressure value that converges to the true pressure value
+		for (int i = 0; i < iterations; i++) {
+			foreach (Cell cell in vectorField.grid) {	
+				if (cell.CheckIfBorderCell() || cell.CheckIfImpassible()) continue;
+
+				// calculating the pressure
+				cell.pressure = (cell.divergence + 
+					cell.eastCell.pressure + cell.westCell.pressure +
+					cell.northCell.pressure + cell.southCell.pressure) / 4f;
 			}
+		}
+		
+		foreach (Cell cell in vectorField.grid) {	
+			if (cell.CheckIfBorderCell() || cell.CheckIfImpassible()) continue;
+			
+			// calculating the pressure gradient
+			Vector2 pressureGradient = new Vector2(
+				(cell.eastCell.pressure - cell.westCell.pressure) * 0.5f / cellDiameter,
+				(cell.northCell.pressure - cell.southCell.pressure) * 0.5f / cellDiameter
+			);
+			cell.velocity += pressureGradient; // applying the pressure gradient
+			
+			// clearing the divergence
+			cell.westCell.velocity.x -= pressureGradient.x;
+			cell.eastCell.velocity.x += pressureGradient.x;
+			cell.southCell.velocity.y -= pressureGradient.y;
+			cell.northCell.velocity.y += pressureGradient.y;
+		}
+	}
+	
+	private void IntegrateVelocityAdvection() {
+		foreach (Cell cell in vectorField.grid) {
+			if (cell.CheckIfBorderCell() || cell.CheckIfImpassible()) continue;
+
+			// advecting the velocity using semi-Lagrangian method
+			Vector3 previousPosition = cell.worldPosition - Time.deltaTime * cell.GetVector3Velocity();
+			Cell previousCell = vectorField.GetCellFromWorldPosition(previousPosition);
+
+			if (previousCell.CheckIfBorderCell() || previousCell.CheckIfImpassible()) continue;
+
+			// interpolating the velocity using bilinear interpolation
+			float xRatio = (previousPosition.x - previousCell.worldPosition.x) / cellDiameter;
+			float yRatio = (previousPosition.y - previousCell.worldPosition.y) / cellDiameter;
+
+			Vector2 topLeftVelocity = previousCell.northWestCell.velocity;
+			Vector2 topRightVelocity = previousCell.northEastCell.velocity;
+			Vector2 bottomLeftVelocity = previousCell.southWestCell.velocity;
+			Vector2 bottomRightVelocity = previousCell.southEastCell.velocity;
+
+			Vector2 topInterpolatedVelocity = Vector2.Lerp(topLeftVelocity, topRightVelocity, xRatio);
+			Vector2 bottomInterpolatedVelocity = Vector2.Lerp(bottomLeftVelocity, bottomRightVelocity, xRatio);
+			Vector2 interpolatedVelocity = Vector2.Lerp(topInterpolatedVelocity, bottomInterpolatedVelocity, yRatio);
+
+			// setting the new velocity
+			cell.velocity += interpolatedVelocity;
 		}
 	}
 }

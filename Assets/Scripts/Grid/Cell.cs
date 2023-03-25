@@ -14,6 +14,10 @@ public class Cell
 	public Cell eastCell;
 	public Cell southCell;
 	public Cell westCell;
+	public Cell northEastCell;
+	public Cell northWestCell;
+	public Cell southEastCell;
+	public Cell southWestCell;
 	
 	// visualization
 	public Color color;
@@ -26,10 +30,8 @@ public class Cell
 	public ushort bestCost;
 	
 	// Fluid Simulation Values
-	public float density;
-	public float viscosity { get; private set; }
 	public float divergence;
-	public Vector2 pressure;
+	public float pressure;
 	
 	// Constructor
 	public Cell(Vector3 worldPos, Vector2Int index) {
@@ -44,6 +46,10 @@ public class Cell
 		eastCell = null;
 		southCell = null;
 		westCell = null;
+		northEastCell = null;
+		northWestCell = null;
+		southEastCell = null;
+		southWestCell = null;
 		
 		// visualization values init
 		vector = null;
@@ -56,15 +62,19 @@ public class Cell
 		bestCost = ushort.MaxValue;
 		
 		// Fluid Simulation values init
-		density = 1.0f; // cannot == 0 
-		viscosity = 7.5f;
-		divergence = 0.5f;
-		pressure = new Vector2(1 , 0.2f);
+		divergence = 0;
+		pressure = 0;
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y).normalized; }
 	
-	public bool CheckIfBorderCell() { return (northCell == null || eastCell == null || southCell == null || westCell == null); }
+	public bool CheckIfBorderCell() { 
+		bool isCardinalBorder = (northCell == null || eastCell == null || southCell == null || westCell == null);
+		bool isDiagnolBorder = (northEastCell == null || northWestCell == null || southEastCell == null || southWestCell == null);
+		return isCardinalBorder || isDiagnolBorder;
+	}
+	
+	public bool CheckIfImpassible() { return (cost == byte.MaxValue); }
 	
 	public void IncreaseCost(int val) {
 		if (cost == byte.MaxValue) return;

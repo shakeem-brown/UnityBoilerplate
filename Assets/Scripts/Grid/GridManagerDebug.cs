@@ -45,22 +45,40 @@ public class GridManagerDebug : MonoBehaviour
 			
 			foreach (Cell currentCell in vectorField.grid) {
 				if (mCubeHolder.childCount < vectorField.grid.Length) DisplayCube(currentCell);
-				else VisualizeDiffusion(currentCell);
+				else VisualizeFluidSimulation(currentCell);
 			}
 		}
 	}
 	
-	private void VisualizeDiffusion(Cell cell) {		
+	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
-		Color diffusedColor = meshRenderer.material.color;	
-		float num = (fluidSimulation.Pressure(cell) - fluidSimulation.Diffusion(cell)).magnitude;
-		//diffusedColor = new Color(cell.density - num, 0, 0);
-		diffusedColor.b = -cell.density + num;
-		meshRenderer.material.color = diffusedColor;
+		
+		float pressure = cell.pressure;
+		float r, g, b;
+		if (pressure < 0.25f) {
+			r = 4f * pressure;
+			g = 0f;
+			b = 1f;
+		} else if (pressure < 0.5f) {
+			r = 1f;
+			g = 4f * (pressure - 0.25f);
+			b = 1f - 4f * (pressure - 0.25f);
+		} else if (pressure < 0.75f) {
+			r = 1f - 4f * (pressure - 0.5f);
+			g = 1f;
+			b = 0f;
+		} else {
+			r = 0f;
+			g = 1f - 4f * (pressure - 0.75f);
+			b = 0f;
+		}
+
+		// sets the mesh renderer's color
+		meshRenderer.material.color = new Color(r, g, b);
 	}
 	
 	private void DisplayLine(Cell cell) {
-		GameObject vector = CreateLine("vector", cell.worldPosition, 0.2f, cell.color, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
+		GameObject vector = CreateLine("vector", cell.worldPosition, 0.2f, Color.white, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
 		vector.transform.parent = mVectorHolder;
 		cell.vector = vector;
 	}
@@ -74,7 +92,7 @@ public class GridManagerDebug : MonoBehaviour
 	private GameObject CreateCube(string cubeName, Vector3 cubePos, Color cubeColor) {
 		GameObject cube = Instantiate(mCubePrefab);
 		cube.name = cubeName;
-		cube.transform.position = new Vector3(cubePos.x, -mGridManager.cellRadius * 2, cubePos.z);
+		cube.transform.position = new Vector3(cubePos.x, -mGridManager.cellRadius, cubePos.z);
 		cube.transform.localScale = new Vector3(mGridManager.cellRadius * 2, cube.transform.localScale.y, mGridManager.cellRadius * 2);
 		cube.GetComponent<MeshRenderer>().material.SetColor("_Color", cubeColor);
 		return cube;

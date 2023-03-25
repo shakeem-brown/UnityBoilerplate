@@ -90,6 +90,11 @@ public class VectorField
 					else if (x == 1 && y == 0) cell.eastCell = neighborCell;
 					else if (x == 0 && y == -1) cell.southCell = neighborCell;
 					else if (x == -1 && y == 0) cell.westCell = neighborCell;
+					// sets the diagnol neighbor cells if they exist
+					else if (x == 1 && y == 1) cell.northEastCell = neighborCell;
+					else if (x == -1 && y == 1) cell.northWestCell = neighborCell;
+					else if (x == 1 && y == -1) cell.southEastCell = neighborCell;
+					else if (x == -1 && y == -1) cell.southWestCell = neighborCell;
 					
 					cell.neighborCells.Add(neighborCell);
 				}
