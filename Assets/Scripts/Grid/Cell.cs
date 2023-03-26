@@ -30,8 +30,11 @@ public class Cell
 	public ushort bestCost;
 	
 	// Fluid Simulation Values
-	public float divergence;
+	public Vector2 previousVelocity;
+	public float previousDensity;
+	public float density;
 	public float pressure;
+	public float divergence;
 	
 	// Constructor
 	public Cell(Vector3 worldPos, Vector2Int index) {
@@ -62,18 +65,17 @@ public class Cell
 		bestCost = ushort.MaxValue;
 		
 		// Fluid Simulation values init
-		divergence = 0;
+		previousVelocity = Vector2.zero;
+		previousDensity = 0;
+		density = 0;
 		pressure = 0;
+		divergence = 0;
 	}
 	
 	public Vector3 GetVector3Velocity() { return new Vector3(velocity.x, 0, velocity.y).normalized; }
-	
-	public bool CheckIfBorderCell() { 
-		bool isCardinalBorder = (northCell == null || eastCell == null || southCell == null || westCell == null);
-		bool isDiagnolBorder = (northEastCell == null || northWestCell == null || southEastCell == null || southWestCell == null);
-		return isCardinalBorder || isDiagnolBorder;
-	}
-	
+
+	public bool CheckIfCardinalBorderCell() { return (northCell == null || eastCell == null || southCell == null || westCell == null); }	
+	public bool CheckIfDiagnolBorderCell() { return (northEastCell == null || northWestCell == null || southEastCell == null || southWestCell == null); }
 	public bool CheckIfImpassible() { return (cost == byte.MaxValue); }
 	
 	public void IncreaseCost(int val) {

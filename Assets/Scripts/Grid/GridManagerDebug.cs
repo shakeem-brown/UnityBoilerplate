@@ -53,28 +53,15 @@ public class GridManagerDebug : MonoBehaviour
 	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
 		
-		float pressure = cell.pressure;
-		float r, g, b;
-		if (pressure < 0.25f) {
-			r = 4f * pressure;
-			g = 0f;
-			b = 1f;
-		} else if (pressure < 0.5f) {
-			r = 1f;
-			g = 4f * (pressure - 0.25f);
-			b = 1f - 4f * (pressure - 0.25f);
-		} else if (pressure < 0.75f) {
-			r = 1f - 4f * (pressure - 0.5f);
-			g = 1f;
-			b = 0f;
-		} else {
-			r = 0f;
-			g = 1f - 4f * (pressure - 0.75f);
-			b = 0f;
-		}
-
+		Color diffusionColor = Color.black;
+		diffusionColor.b = cell.density;
+		
+		// make the density fade
+		cell.density -= 0.01f;
+		cell.density = Mathf.Clamp(cell.density, 0, 1); 
+		
 		// sets the mesh renderer's color
-		meshRenderer.material.color = new Color(r, g, b);
+		meshRenderer.material.color = diffusionColor;
 	}
 	
 	private void DisplayLine(Cell cell) {

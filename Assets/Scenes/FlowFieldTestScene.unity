@@ -688,11 +688,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d1a97725d590b7428d12fdd805d3e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 50, y: 50}
+  gridSize: {x: 25, y: 25}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
-  fluidDensity: 6.3
-  iterations: 6
+  timeStep: 0.001
+  diffision: 0.001
+  viscosity: 0.001
 --- !u!4 &424040254
 Transform:
   m_ObjectHideFlags: 0

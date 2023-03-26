@@ -23,7 +23,7 @@ public class Unit : MonoBehaviour
 		
 		// check if the cell is a border cell and prevent the cell from leaving the grid by applying the offset
 		if (cell != null) {
-			if (cell.CheckIfBorderCell()) {
+			if (cell.CheckIfCardinalBorderCell()) {
 				if (cell.northCell == null) offset.z += -OFFSET;
 				if (cell.eastCell == null) offset.x += -OFFSET;
 				if (cell.southCell == null) offset.z += OFFSET;

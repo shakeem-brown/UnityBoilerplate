@@ -10,8 +10,9 @@ public class GridManager : MonoBehaviour
     public float cellRadius;
 	[Space]
 	[Header("Fluid Simulation Properties")]
-	[Min(0)]public float fluidDensity;
-	[Min(1)] public int iterations;
+	[Min(0.001f)] public float timeStep;
+	[Min(0.001f)] public float diffision;
+	[Min(0.001f)] public float viscosity;
 	
     public VectorField vectorField { get; private set; }
     public FlowField flowField { get; private set; }
@@ -19,10 +20,12 @@ public class GridManager : MonoBehaviour
 	public Cell lastDestinationCell { get; private set; }
 	private GridManagerDebug mGridManagerDebug;
 	
+	private Vector3 previousMousePos;
+	
 	private void Start() {
 		vectorField = new VectorField(gridSize, gridOffset, cellRadius); // initalizing the vector field
 		flowField = new FlowField(vectorField); // initalizing the flow field
-		fluidSimulation = new FluidSimulation(vectorField, fluidDensity, iterations); // initalizing the fluid simulation
+		fluidSimulation = new FluidSimulation(vectorField, timeStep, diffision, viscosity); // initalizing the fluid simulation
 
 		// DEBUG
 		mGridManagerDebug = GetComponent<GridManagerDebug>();
@@ -33,6 +36,7 @@ public class GridManager : MonoBehaviour
     private void Update() { 
 		if (Input.GetMouseButton(0)) { 
 			UpdateFlowField(vectorField.GetCellAtMouseClickPosition());
+			FluidSimulationMouseDrag(vectorField.GetCellAtMouseClickPosition());
 		}
 		UpdateFluidSimulation();
 	}
@@ -52,10 +56,24 @@ public class GridManager : MonoBehaviour
         }
     }
 	
-	public void UpdateFluidSimulation() {
-		if (!mGridManagerDebug.isFluidSimulationActive) return;
-		
-		fluidSimulation.UpdateFluidSimulation();
-		mGridManagerDebug.fluidSimulation = fluidSimulation; // for DEBUG
+	public void UpdateFluidSimulation() { 
+		if (mGridManagerDebug.isFluidSimulationActive) {
+			fluidSimulation.Step(); 
+			mGridManagerDebug.fluidSimulation = fluidSimulation; // for DEBUG
+		}
+	}
+	
+	private void FluidSimulationMouseDrag(Cell mouseCell) {
+		if (previousMousePos == Vector3.zero) previousMousePos = mouseCell.worldPosition;
+		if (mouseCell == null || !mGridManagerDebug.isFluidSimulationActive) return;
+		mouseCell.density += 100f;
+		mouseCell.velocity.x += mouseCell.worldPosition.x - mouseCell.worldPosition.x;
+		mouseCell.velocity.y += mouseCell.worldPosition.z - mouseCell.worldPosition.z;
+		foreach (Cell neighbor in mouseCell.neighborCells) {
+			neighbor.density += 100f;
+			neighbor.velocity.x += neighbor.worldPosition.x - neighbor.worldPosition.x;
+			neighbor.velocity.y += neighbor.worldPosition.z - neighbor.worldPosition.z;
+		}
+		previousMousePos = mouseCell.worldPosition;
 	}
 }
