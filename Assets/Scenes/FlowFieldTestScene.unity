@@ -674,7 +674,7 @@ MonoBehaviour:
   mGridHolder: {fileID: 1284176164}
   mVectorHolder: {fileID: 1439301727}
   mCubeHolder: {fileID: 516391771}
-  isFlowFieldActivated: 0
+  isFlowFieldActivated: 1
   isFluidSimulationActive: 1
 --- !u!114 &424040253
 MonoBehaviour:
@@ -688,13 +688,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d1a97725d590b7428d12fdd805d3e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 25, y: 25}
+  gridSize: {x: 50, y: 50}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
-  gravitationalConstant: -9.81
-  fluidDensity: 1
-  overrelaxation: 1.9
-  iterations: 10
+  fluidDensity: 6.3
+  iterations: 6
 --- !u!4 &424040254
 Transform:
   m_ObjectHideFlags: 0

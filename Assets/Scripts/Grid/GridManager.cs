@@ -10,9 +10,7 @@ public class GridManager : MonoBehaviour
     public float cellRadius;
 	[Space]
 	[Header("Fluid Simulation Properties")]
-	public float gravitationalConstant;
-	[Min(0)] public float fluidDensity;
-	[Range(1,2)] public float overrelaxation;
+	[Min(0)]public float fluidDensity;
 	[Min(1)] public int iterations;
 	
     public VectorField vectorField { get; private set; }
@@ -24,7 +22,7 @@ public class GridManager : MonoBehaviour
 	private void Start() {
 		vectorField = new VectorField(gridSize, gridOffset, cellRadius); // initalizing the vector field
 		flowField = new FlowField(vectorField); // initalizing the flow field
-		fluidSimulation = new FluidSimulation(vectorField, gravitationalConstant, fluidDensity, overrelaxation, iterations); // initalizing the fluid simulation
+		fluidSimulation = new FluidSimulation(vectorField, fluidDensity, iterations); // initalizing the fluid simulation
 
 		// DEBUG
 		mGridManagerDebug = GetComponent<GridManagerDebug>();
