@@ -691,9 +691,9 @@ MonoBehaviour:
   gridSize: {x: 25, y: 25}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
-  timeStep: 0.001
-  diffision: 0.001
-  viscosity: 0.001
+  timeStep: 0.1
+  diffision: 35
+  viscosity: 7.5
 --- !u!4 &424040254
 Transform:
   m_ObjectHideFlags: 0
