@@ -28,15 +28,15 @@ public class FluidSimulation
 	}
 	
 	public void Step() {
-		DiffuseVelocity(); // diffuse previous velocity
-		Project(); // project previous velocity
-		AdvectVelocity(); // advect previous velocity
+		DiffusePreviousVelocity(); // diffuse previous velocity
+		ProjectPreviousVelocity(); // project previous velocity
+		AdvectPreviousVelocity(); // advect previous velocity
 		Project(); // project velocity
 		DiffuseDensity(); // diffuse density
 		AdvectDensity(); // advect density
 	}
 	
-	private void DiffuseVelocity () {
+	private void DiffusePreviousVelocity () {
 		float cRecip = 1 / (dt * diffision * (gridSize.x - 2) * (gridSize.y - 2));
 		for (int i = 0; i < iterations; i++) {
 			foreach (Cell cell in vectorField.grid) {
@@ -70,7 +70,11 @@ public class FluidSimulation
 	
 	private void ProjectPreviousVelocity() {
 		foreach (Cell cell in vectorField.grid) {
-			if (cell.CheckIfCardinalBorderCell()) continue;
+			if (cell.CheckIfCardinalBorderCell()) {
+				SetDivergenceBoundaries(cell);
+				SetPressureBoundaries(cell);				
+				continue;
+			}
 			
 			cell.divergence = -0.5f * (
 				((cell.eastCell.velocity.x - cell.westCell.velocity.x) / gridSize.x) +
@@ -78,13 +82,15 @@ public class FluidSimulation
 			);
 			cell.pressure = 0;
 		}
-		SetDivergenceBoundaries();
-		SetPressureBoundaries();
 		
-		float cRecip = 1 / 6;
+		
+		float cRecip = 1 / (dt * diffision * (gridSize.x - 2) * (gridSize.y - 2));
 		for (int i = 0; i < iterations; i++) {
 			foreach (Cell cell in vectorField.grid) {
-				if (cell.CheckIfCardinalBorderCell()) continue;
+				if (cell.CheckIfCardinalBorderCell()) { 
+					SetPressureBoundaries(cell);
+					continue;
+				}
 				
 				cell.pressure = (
 					cell.divergence + 1 * 
@@ -96,17 +102,23 @@ public class FluidSimulation
 		}
 		
 		foreach (Cell cell in vectorField.grid) {
-			if (cell.CheckIfCardinalBorderCell()) continue;
+			if (cell.CheckIfCardinalBorderCell()) {
+				SetVelocityBoundaries(cell);
+				continue;
+			}
 			
 			cell.velocity.x -= 0.5f * (cell.eastCell.pressure - cell.westCell.pressure) * gridSize.x;
 			cell.velocity.y -= 0.5f * (cell.northCell.pressure - cell.southCell.pressure) * gridSize.y;
-		}
-		SetVelocityBoundaries();
+		}	
 	}
 	
 	private void Project() {
 		foreach (Cell cell in vectorField.grid) {
-			if (cell.CheckIfCardinalBorderCell()) continue;
+			if (cell.CheckIfCardinalBorderCell()) {
+				SetDivergenceBoundaries(cell);
+				SetPressureBoundaries(cell);				
+				continue;
+			}
 			
 			cell.divergence = -0.5f * (
 				((cell.eastCell.velocity.x - cell.westCell.velocity.x) / gridSize.x) +
@@ -114,13 +126,14 @@ public class FluidSimulation
 			);
 			cell.pressure = 0;
 		}
-		SetDivergenceBoundaries();
-		SetPressureBoundaries();
 		
-		float cRecip = 1 / 6;
+		float cRecip = 1 / (dt * diffision * (gridSize.x - 2) * (gridSize.y - 2));
 		for (int i = 0; i < iterations; i++) {
 			foreach (Cell cell in vectorField.grid) {
-				if (cell.CheckIfCardinalBorderCell()) continue;
+				if (cell.CheckIfCardinalBorderCell()) { 
+					SetPressureBoundaries(cell);
+					continue;
+				}
 				
 				cell.pressure = (
 					cell.divergence + 1 * 
@@ -132,60 +145,69 @@ public class FluidSimulation
 		}
 		
 		foreach (Cell cell in vectorField.grid) {
-			if (cell.CheckIfCardinalBorderCell()) continue;
+			if (cell.CheckIfCardinalBorderCell()) { 
+				SetVelocityBoundaries(cell);
+				continue;
+			}
 			
 			cell.velocity.x -= 0.5f * (cell.eastCell.pressure - cell.westCell.pressure) * gridSize.x;
 			cell.velocity.y -= 0.5f * (cell.northCell.pressure - cell.southCell.pressure) * gridSize.y;
 		}
-		SetVelocityBoundaries();
 	}
 	
-	private void SetVelocityBoundaries() {
-		foreach (Cell cell in vectorField.grid) {
-			// handling cardinal cases
-			if (cell.eastCell == null) cell.velocity.x = -cell.westCell.velocity.x;
-			if (cell.westCell == null) cell.velocity.x = -cell.eastCell.velocity.x;
-			if (cell.northCell == null) cell.velocity.y = -cell.southCell.velocity.y;
-			if (cell.southCell == null) cell.velocity.y = -cell.northCell.velocity.y;
-			// handling diagnol cases
-			if (cell.northEastCell == null) cell.velocity = 0.5f * (cell.southCell.velocity + cell.westCell.velocity);
-			if (cell.northWestCell == null) cell.velocity = 0.5f * (cell.southCell.velocity + cell.eastCell.velocity);
-			if (cell.southEastCell == null) cell.velocity = 0.5f * (cell.northCell.velocity + cell.westCell.velocity);
-			if (cell.southWestCell == null) cell.velocity = 0.5f * (cell.northCell.velocity + cell.eastCell.velocity);
-		}
+	private void SetVelocityBoundaries(Cell borderCell) {
+		// handling cardinal cases
+		if (borderCell.eastCell == null) borderCell.velocity.x = -borderCell.westCell.velocity.x;
+		if (borderCell.westCell == null) borderCell.velocity.x = -borderCell.eastCell.velocity.x;
+		if (borderCell.northCell == null) borderCell.velocity.y = -borderCell.southCell.velocity.y;
+		if (borderCell.southCell == null) borderCell.velocity.y = -borderCell.northCell.velocity.y;
+		// handling diagnol cases
+		if (borderCell.northEastCell == null) borderCell.velocity = 0.5f * (borderCell.southCell.velocity + borderCell.westCell.velocity);
+		if (borderCell.northWestCell == null) borderCell.velocity = 0.5f * (borderCell.southCell.velocity + borderCell.eastCell.velocity);
+		if (borderCell.southEastCell == null) borderCell.velocity = 0.5f * (borderCell.northCell.velocity + borderCell.westCell.velocity);
+		if (borderCell.southWestCell == null) borderCell.velocity = 0.5f * (borderCell.northCell.velocity + borderCell.eastCell.velocity);
 	}
 	
-	private void SetDivergenceBoundaries() {
-		foreach (Cell cell in vectorField.grid) {
-			// handling cardinal cases
-			if (cell.eastCell == null) cell.divergence = -cell.westCell.divergence;
-			if (cell.westCell == null) cell.divergence = -cell.eastCell.divergence;
-			if (cell.northCell == null) cell.divergence = -cell.southCell.divergence;
-			if (cell.southCell == null) cell.divergence = -cell.northCell.divergence;
-			// handling diagnol cases
-			if (cell.northEastCell == null) cell.divergence = 0.5f * (cell.southCell.divergence + cell.westCell.divergence);
-			if (cell.northWestCell == null) cell.divergence = 0.5f * (cell.southCell.divergence + cell.eastCell.divergence);
-			if (cell.southEastCell == null) cell.divergence = 0.5f * (cell.northCell.divergence + cell.westCell.divergence);
-			if (cell.southWestCell == null) cell.divergence = 0.5f * (cell.northCell.divergence + cell.eastCell.divergence);
-		}
+	private void SetDivergenceBoundaries(Cell borderCell) {
+		// handling cardinal cases
+		if (borderCell.eastCell == null) borderCell.divergence = -borderCell.westCell.divergence;
+		if (borderCell.westCell == null) borderCell.divergence = -borderCell.eastCell.divergence;
+		if (borderCell.northCell == null) borderCell.divergence = -borderCell.southCell.divergence;
+		if (borderCell.southCell == null) borderCell.divergence = -borderCell.northCell.divergence;
+		// handling diagnol cases
+		if (borderCell.northEastCell == null) borderCell.divergence = 0.5f * (borderCell.southCell.divergence + borderCell.westCell.divergence);
+		if (borderCell.northWestCell == null) borderCell.divergence = 0.5f * (borderCell.southCell.divergence + borderCell.eastCell.divergence);
+		if (borderCell.southEastCell == null) borderCell.divergence = 0.5f * (borderCell.northCell.divergence + borderCell.westCell.divergence);
+		if (borderCell.southWestCell == null) borderCell.divergence = 0.5f * (borderCell.northCell.divergence + borderCell.eastCell.divergence);
 	}
 	
-	private void SetPressureBoundaries() {
-		foreach (Cell cell in vectorField.grid) {
-			// handling cardinal cases
-			if (cell.eastCell == null) cell.pressure = -cell.westCell.pressure;
-			if (cell.westCell == null) cell.pressure = -cell.eastCell.pressure;
-			if (cell.northCell == null) cell.pressure = -cell.southCell.pressure;
-			if (cell.southCell == null) cell.pressure = -cell.northCell.pressure;
-			// handling diagnol cases
-			if (cell.northEastCell == null) cell.pressure = 0.5f * (cell.southCell.pressure + cell.westCell.pressure);
-			if (cell.northWestCell == null) cell.pressure = 0.5f * (cell.southCell.pressure + cell.eastCell.pressure);
-			if (cell.southEastCell == null) cell.pressure = 0.5f * (cell.northCell.pressure + cell.westCell.pressure);
-			if (cell.southWestCell == null) cell.pressure = 0.5f * (cell.northCell.pressure + cell.eastCell.pressure);
-		}
+	private void SetPressureBoundaries(Cell borderCell) {
+		// handling cardinal cases
+		if (borderCell.eastCell == null) borderCell.pressure = -borderCell.westCell.pressure;
+		if (borderCell.westCell == null) borderCell.pressure = -borderCell.eastCell.pressure;
+		if (borderCell.northCell == null) borderCell.pressure = -borderCell.southCell.pressure;
+		if (borderCell.southCell == null) borderCell.pressure = -borderCell.northCell.pressure;
+		// handling diagnol cases
+		if (borderCell.northEastCell == null) borderCell.pressure = 0.5f * (borderCell.southCell.pressure + borderCell.westCell.pressure);
+		if (borderCell.northWestCell == null) borderCell.pressure = 0.5f * (borderCell.southCell.pressure + borderCell.eastCell.pressure);
+		if (borderCell.southEastCell == null) borderCell.pressure = 0.5f * (borderCell.northCell.pressure + borderCell.westCell.pressure);
+		if (borderCell.southWestCell == null) borderCell.pressure = 0.5f * (borderCell.northCell.pressure + borderCell.eastCell.pressure);
 	}
 	
-	private void AdvectVelocity() {
+	private void SetDensityBoundaries(Cell borderCell) {
+		// handling cardinal cases
+		if (borderCell.eastCell == null) borderCell.density = -borderCell.westCell.density;
+		if (borderCell.westCell == null) borderCell.density = -borderCell.eastCell.density;
+		if (borderCell.northCell == null) borderCell.density = -borderCell.southCell.density;
+		if (borderCell.southCell == null) borderCell.density = -borderCell.northCell.density;
+		// handling diagnol cases
+		if (borderCell.northEastCell == null) borderCell.density = 0.5f * (borderCell.southCell.density + borderCell.westCell.density);
+		if (borderCell.northWestCell == null) borderCell.density = 0.5f * (borderCell.southCell.density + borderCell.eastCell.density);
+		if (borderCell.southEastCell == null) borderCell.density = 0.5f * (borderCell.northCell.density + borderCell.westCell.density);
+		if (borderCell.southWestCell == null) borderCell.density = 0.5f * (borderCell.northCell.density + borderCell.eastCell.density);
+	}
+	
+	private void AdvectPreviousVelocity() {
 		Vector2 i, j;
 		Vector2 delta = new Vector2(dt * (gridSize.x - 2), dt * (gridSize.y - 2));
 		
@@ -221,10 +243,10 @@ public class FluidSimulation
 			int j0i = (int)j.x;
 			int j1i = (int)j.y;
 			
-			if (i0i > gridSize.x - 1) continue;
-			if (i1i > gridSize.x - 1) continue;
-			if (j0i > gridSize.x - 1) continue;
-			if (j1i > gridSize.x - 1) continue;
+			if (i0i > gridSize.x - 1 || i0i < 1) continue;
+			if (i1i > gridSize.x - 1 || i1i < 1) continue;
+			if (j0i > gridSize.y - 1 || j0i < 1) continue;
+			if (j1i > gridSize.y - 1 || j1i < 1) continue;
 			
 			cell.velocity = (
 	        s.x * (t.x * vectorField.grid[i0i, j0i].previousVelocity)
@@ -233,7 +255,6 @@ public class FluidSimulation
 				+ (t.y * vectorField.grid[i1i, j1i].previousVelocity)
 			);
 		}
-		SetVelocityBoundaries();
 	}
 	
 	private void AdvectDensity() {
@@ -272,10 +293,10 @@ public class FluidSimulation
 			int j0i = (int)j.x;
 			int j1i = (int)j.y;
 			
-			if (i0i > gridSize.x - 1) continue;
-			if (i1i > gridSize.x - 1) continue;
-			if (j0i > gridSize.x - 1) continue;
-			if (j1i > gridSize.x - 1) continue;
+			if (i0i > gridSize.x - 1 || i0i < 1) continue;
+			if (i1i > gridSize.x - 1 || i1i < 1) continue;
+			if (j0i > gridSize.y - 1 || j0i < 1) continue;
+			if (j1i > gridSize.y - 1 || j1i < 1) continue;
 			
 			cell.density = (
 	        s.x * (t.x * vectorField.grid[i0i, j0i].previousDensity)
@@ -284,6 +305,5 @@ public class FluidSimulation
 				+ (t.y * vectorField.grid[i1i, j1i].previousDensity)
 			);
 		}
-		SetVelocityBoundaries();
 	}
 }
