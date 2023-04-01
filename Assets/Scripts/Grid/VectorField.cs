@@ -29,7 +29,7 @@ public class VectorField
 		return grid[x, y]; // return that cell at that index
 	}
 	
-		// changes the goal node to the nearest cell at the mouse position
+	// changes the goal node to the nearest cell at the mouse position
 	public Cell GetCellAtMouseClickPosition() {
 		Vector3 mousePos = Input.mousePosition;
 		mousePos.z = Camera.main.nearClipPlane;

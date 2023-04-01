@@ -31,9 +31,9 @@ public class FluidSimulation
 		DiffusePreviousVelocity(); // diffuse previous velocity
 		ProjectPreviousVelocity(); // project previous velocity
 		AdvectPreviousVelocity(); // advect previous velocity
-		Project(); // project velocity
-		DiffuseDensity(); // diffuse density
-		AdvectDensity(); // advect density
+		ProjectVelocity(); // project velocity
+		DiffusePreviousDensity(); // diffuse previous density
+		AdvectPreviousDensity(); // advect previous density
 	}
 	
 	private void DiffusePreviousVelocity () {
@@ -52,7 +52,7 @@ public class FluidSimulation
 		}
 	}
 	
-	private void DiffuseDensity () {
+	private void DiffusePreviousDensity () {
 		float cRecip = 1 / (dt * diffision * (gridSize.x - 2) * (gridSize.y - 2));
 		for (int i = 0; i < iterations; i++) {
 			foreach (Cell cell in vectorField.grid) {
@@ -112,7 +112,7 @@ public class FluidSimulation
 		}	
 	}
 	
-	private void Project() {
+	private void ProjectVelocity() {
 		foreach (Cell cell in vectorField.grid) {
 			if (cell.CheckIfCardinalBorderCell()) {
 				SetDivergenceBoundaries(cell);
@@ -257,7 +257,7 @@ public class FluidSimulation
 		}
 	}
 	
-	private void AdvectDensity() {
+	private void AdvectPreviousDensity() {
 		Vector2 i, j;
 		Vector2 delta = new Vector2(dt * (gridSize.x - 2), dt * (gridSize.y - 2));
 		
@@ -268,8 +268,8 @@ public class FluidSimulation
 		foreach (Cell cell in vectorField.grid) {
 			if (cell.CheckIfCardinalBorderCell()) continue;
 			
-			tmp1 = delta.x * cell.velocity.x;
-			tmp2 = delta.y * cell.velocity.y;
+			tmp1 = delta.x * cell.previousVelocity.x * cell.previousDensity;
+			tmp2 = delta.y * cell.previousVelocity.y * cell.previousDensity;
 			x = cell.gridIndex.x - tmp1; 
 			y = cell.gridIndex.y - tmp2;
 			

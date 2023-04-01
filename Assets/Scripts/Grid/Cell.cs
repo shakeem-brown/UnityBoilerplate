@@ -20,9 +20,9 @@ public class Cell
 	public Cell southWestCell;
 	
 	// visualization
-	public Color color;
 	public GameObject vector;
 	public GameObject cube;
+	public Color vectorColor;
 	
 	// Pathfinding Values
 	public Unit unit;
@@ -57,7 +57,7 @@ public class Cell
 		// visualization values init
 		vector = null;
 		cube = null;
-		color = Color.white;
+		vectorColor = Color.white;
 		
 		// Pathfinding values init
 		unit = null;

@@ -52,9 +52,10 @@ public class GridManagerDebug : MonoBehaviour
 	
 	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
-		
 		Color diffusionColor = Color.black;
+		
 		diffusionColor.b = cell.density;
+		diffusionColor.r = cell.density;
 		
 		// make the density fade
 		cell.density -= 0.01f;

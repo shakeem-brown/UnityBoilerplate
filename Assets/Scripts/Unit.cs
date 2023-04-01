@@ -13,7 +13,7 @@ public class Unit : MonoBehaviour
 	private void Start() {
 		FindObjectOfType<GameManager>().unitList.Add(this);
 		//color = new Color(Random.value, Random.value, Random.value);
-		color = Color.black;
+		color = new Color(1f, 1f, 0f);
 		GetComponent<Renderer>().material.SetColor("_Color", color);
 		speed = Random.Range(5f, 10f);
 	}
