@@ -688,7 +688,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d1a97725d590b7428d12fdd805d3e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 45, y: 45}
+  gridSize: {x: 80, y: 40}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
   timeStep: 3
