@@ -29,49 +29,58 @@ public class GridManagerDebug : MonoBehaviour
 		if (isFlowFieldActivated) {
 			if (mGridManager == null || vectorField == null || flowField == null) return;
 			if (flowField != mGridManager.flowField) return;
-			
+
 			// Display all the flow field vectors
-			foreach (Cell currentCell in vectorField.grid) {
-				if (mVectorHolder.childCount < vectorField.grid.Length) DisplayLine(currentCell);
-				else currentCell.vector.GetComponent<LineRenderer>().SetPositions(new Vector3[] { currentCell.worldPosition, currentCell.worldPosition + currentCell.GetVector3Velocity() });
-			}
-		}
+			DrawVectorField();
+        }
 	}
+
+	private void DrawVectorField() {
+        foreach (Cell currentCell in vectorField.grid) {
+			if (mVectorHolder.childCount < vectorField.grid.Length) DrawLine(currentCell);
+			else currentCell.vector.GetComponent<LineRenderer>().SetPositions(new Vector3[] { currentCell.worldPosition, currentCell.worldPosition + currentCell.GetVector3Velocity() });
+		}
+    }
 	
 	private void FluidSimulationDisplay() {
 		if (isFluidSimulationActive) {
 			if (mGridManager == null || vectorField == null || fluidSimulation == null) return;
 			if (fluidSimulation != mGridManager.fluidSimulation) return;
-			
-			foreach (Cell currentCell in vectorField.grid) {
-				if (mCubeHolder.childCount < vectorField.grid.Length) DisplayCube(currentCell);
+
+            DrawVectorField();
+
+            foreach (Cell currentCell in vectorField.grid) {
+				if (mCubeHolder.childCount < vectorField.grid.Length) DrawCube(currentCell);
 				else VisualizeFluidSimulation(currentCell);
 			}
-		}
+        }
 	}
 	
 	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
 		Color diffusionColor = Color.black;
 		
-		diffusionColor.b = cell.density;
 		diffusionColor.r = cell.density;
+		diffusionColor.g = cell.density;
+		diffusionColor.b = cell.density;
 		
 		// make the density fade
 		cell.density -= 0.01f;
-		cell.density = Mathf.Clamp(cell.density, 0, 1); 
-		
-		// sets the mesh renderer's color
-		meshRenderer.material.color = diffusionColor;
+		cell.density = Mathf.Clamp(cell.density, 0, 1);
+
+		if (cell.density == 0) cell.velocity = Vector2.zero;
+
+        // sets the mesh renderer's color
+        meshRenderer.material.color = diffusionColor;
 	}
 	
-	private void DisplayLine(Cell cell) {
+	private void DrawLine(Cell cell) {
 		GameObject vector = CreateLine("vector", cell.worldPosition, 0.2f, Color.white, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
 		vector.transform.parent = mVectorHolder;
 		cell.vector = vector;
 	}
 	
-	private void DisplayCube(Cell cell) {
+	private void DrawCube(Cell cell) {
 		GameObject cube = CreateCube("cube", cell.worldPosition, Color.black);
 		cube.transform.parent = mCubeHolder;
 		cell.cube = cube;

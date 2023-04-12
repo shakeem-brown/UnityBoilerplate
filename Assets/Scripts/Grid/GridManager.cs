@@ -37,9 +37,9 @@ public class GridManager : MonoBehaviour
 		if (Input.GetMouseButton(0)) { 
 			UpdateFlowField(vectorField.GetCellAtMouseClickPosition());
 			FluidSimulationMouseDrag(vectorField.GetCellAtMouseClickPosition());
-		}
-		UpdateFluidSimulation();
-	}
+        }
+        UpdateFluidSimulation();
+    }
 	
 	// accessors
 	public void UpdateFlowField(Cell destinationCell) {
@@ -67,14 +67,12 @@ public class GridManager : MonoBehaviour
 		if (previousMousePos == Vector3.zero) previousMousePos = mouseCell.worldPosition;
 		if (mouseCell == null || !mGridManagerDebug.isFluidSimulationActive) return;
 		mouseCell.density += 100f;
-		mouseCell.pressure += 100f;
-		mouseCell.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * 5;
-		mouseCell.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * 5;
+		mouseCell.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * mouseCell.density;
+		mouseCell.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		foreach (Cell neighbor in mouseCell.neighborCells) {
 			neighbor.density += 100f;
-			neighbor.pressure += 100f;
-			neighbor.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * 5;
-			neighbor.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * 5;
+			neighbor.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * mouseCell.density;
+			neighbor.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		}
 		previousMousePos = mouseCell.worldPosition;
 	}

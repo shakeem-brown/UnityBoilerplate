@@ -31,12 +31,12 @@ public class FluidSimulation
 		DiffusePreviousVelocity(); // diffuse previous velocity
 		ProjectPreviousVelocity(); // project previous velocity
 		AdvectPreviousVelocity(); // advect previous velocity
-		ProjectVelocity(); // project velocity
-		DiffusePreviousDensity(); // diffuse previous density
+        ProjectVelocity(); // project velocity
+        DiffusePreviousDensity(); // diffuse previous density
 		AdvectPreviousDensity(); // advect previous density
-	}
-	
-	private void DiffusePreviousVelocity () {
+    }
+
+    private void DiffusePreviousVelocity () {
 		float cRecip = 1 / (dt * diffision * (gridSize.x - 2) * (gridSize.y - 2));
 		for (int i = 0; i < iterations; i++) {
 			foreach (Cell cell in vectorField.grid) {

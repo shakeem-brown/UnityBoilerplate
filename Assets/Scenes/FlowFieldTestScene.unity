@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1875611464}
-  m_IndirectSpecularColor: {r: 0.43667546, g: 0.48427135, b: 0.5645225, a: 1}
+  m_IndirectSpecularColor: {r: 0.4366757, g: 0.48427194, b: 0.5645252, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -674,7 +674,7 @@ MonoBehaviour:
   mGridHolder: {fileID: 1284176164}
   mVectorHolder: {fileID: 1439301727}
   mCubeHolder: {fileID: 516391771}
-  isFlowFieldActivated: 1
+  isFlowFieldActivated: 0
   isFluidSimulationActive: 1
 --- !u!114 &424040253
 MonoBehaviour:
