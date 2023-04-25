@@ -133,6 +133,7 @@ public class GridManagerDebug : MonoBehaviour
 			Vector3 startPos = new Vector3(gridOffset.x * cellDiameter, 0, y * cellDiameter + gridOffset.y * cellDiameter);
 			Vector3 endPos = new Vector3(gridOffset.x * cellDiameter + gridWidth, 0, y * cellDiameter + gridOffset.y * cellDiameter);	
 			GameObject line = CreateLine("row", Vector3.zero, 0.1f, Color.black, startPos, endPos);
+			line.SetActive(false);
 			line.transform.parent = mGridHolder;
 		}
 		
@@ -140,6 +141,7 @@ public class GridManagerDebug : MonoBehaviour
 			Vector3 startPos = new Vector3(x * cellDiameter + gridOffset.x * cellDiameter, 0, gridOffset.y * cellDiameter);
 			Vector3 endPos = new Vector3(x * cellDiameter + gridOffset.x * cellDiameter, 0, gridOffset.y * cellDiameter + gridHeight);
 			GameObject line = CreateLine("column", Vector3.zero, 0.1f, Color.black, startPos, endPos);
+			line.SetActive(false);
 			line.transform.parent = mGridHolder;
 		}
 	}
