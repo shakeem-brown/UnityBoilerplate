@@ -45,17 +45,9 @@ public class Unit : MonoBehaviour
 				foreach (Cell neighbor in nextCell.neighborCells) {
 					Vector2Int neighborGridIndex = neighbor.gridIndex;
 					
-					if (neighborGridIndex.y + 1 == cell.gridIndex.y) {
-						offset.z += OFFSET; // North
-						if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // North East	
-						else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // North West
-					}
-					else if (neighborGridIndex.y - 1 == cell.gridIndex.y) {
-						offset.z += -OFFSET; // South
-						if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // South East	
-						else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // South West
-					}
-					else if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // East	
+					if (neighborGridIndex.y + 1 == cell.gridIndex.y) offset.z += OFFSET; // North
+					else if (neighborGridIndex.y - 1 == cell.gridIndex.y) offset.z += -OFFSET; // South
+					if (neighborGridIndex.x + 1 == cell.gridIndex.x) offset.x += OFFSET; // East	
 					else if (neighborGridIndex.x - 1 == cell.gridIndex.x) offset.x += -OFFSET; // West
 				}
 			}
