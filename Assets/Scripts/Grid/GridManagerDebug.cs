@@ -58,11 +58,12 @@ public class GridManagerDebug : MonoBehaviour
 	
 	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
-		Color diffusionColor = Color.black;
+		//Color diffusionColor = meshRenderer.material.GetColor("_Color");
+		float diffusionAlpha = meshRenderer.material.GetFloat("_Alpha");
 		
-		diffusionColor.r = cell.density;
-		diffusionColor.g = cell.density;
-		diffusionColor.b = cell.density;
+		//diffusionColor.r = cell.density;
+		//diffusionColor.g = cell.density;
+		//diffusionColor.b = cell.density;
 		
 		// make the density fade
 		cell.density -= 0.01f;
@@ -70,9 +71,11 @@ public class GridManagerDebug : MonoBehaviour
 
 		if (cell.density == 0) cell.velocity = Vector2.zero;
 
-        // sets the mesh renderer's color
-        meshRenderer.material.color = diffusionColor;
-	}
+		// sets the mesh renderer's color
+		//meshRenderer.material.color = diffusionColor;
+		meshRenderer.material.SetFloat("_Alpha", cell.density);
+
+    }
 	
 	private void DrawLine(Cell cell) {
 		GameObject vector = CreateLine("vector", cell.worldPosition, 0.2f, Color.white, cell.worldPosition, cell.worldPosition + cell.GetVector3Velocity());
@@ -91,7 +94,7 @@ public class GridManagerDebug : MonoBehaviour
 		cube.name = cubeName;
 		cube.transform.position = new Vector3(cubePos.x, -mGridManager.cellRadius, cubePos.z);
 		cube.transform.localScale = new Vector3(mGridManager.cellRadius * 2, cube.transform.localScale.y, mGridManager.cellRadius * 2);
-		cube.GetComponent<MeshRenderer>().material.SetColor("_Color", cubeColor);
+		//cube.GetComponent<MeshRenderer>().material.SetColor("_Color", cubeColor);
 		return cube;
 	}
 	

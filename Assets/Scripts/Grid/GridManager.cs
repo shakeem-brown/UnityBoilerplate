@@ -69,6 +69,7 @@ public class GridManager : MonoBehaviour
 	}
 	
 	private void FluidSimulationMouseDrag(Cell mouseCell) {
+		if (mouseCell == null) return;
 		if (previousMousePos == Vector3.zero) previousMousePos = mouseCell.worldPosition;
 		if (mouseCell == null || !mGridManagerDebug.isFluidSimulationActive) return;
 		mouseCell.density += 1f;
