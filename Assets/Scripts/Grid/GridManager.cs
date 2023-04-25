@@ -10,7 +10,7 @@ public class GridManager : MonoBehaviour
     public float cellRadius;
 	[Space]
 	[Header("Fluid Simulation Properties")]
-	[Min(0.001f)] public float timeStep;
+	[Range(0f,1f)] public float timeStep;
 	[Min(0.001f)] public float diffision;
 	[Min(0.001f)] public float viscosity;
 	
@@ -58,6 +58,11 @@ public class GridManager : MonoBehaviour
 	
 	public void UpdateFluidSimulation() { 
 		if (mGridManagerDebug.isFluidSimulationActive) {
+			// dynamically update fluid simulation if the properties change
+			if (fluidSimulation.dt != timeStep) fluidSimulation = new FluidSimulation(vectorField, timeStep, fluidSimulation.diffision, fluidSimulation.viscosity); 
+			if (fluidSimulation.diffision != diffision) fluidSimulation = new FluidSimulation(vectorField, fluidSimulation.dt, diffision, fluidSimulation.viscosity); 
+			if (fluidSimulation.viscosity != viscosity) fluidSimulation = new FluidSimulation(vectorField, fluidSimulation.dt, fluidSimulation.diffision, viscosity); 
+			
 			fluidSimulation.Step(); 
 			mGridManagerDebug.fluidSimulation = fluidSimulation; // for DEBUG
 		}
@@ -66,11 +71,11 @@ public class GridManager : MonoBehaviour
 	private void FluidSimulationMouseDrag(Cell mouseCell) {
 		if (previousMousePos == Vector3.zero) previousMousePos = mouseCell.worldPosition;
 		if (mouseCell == null || !mGridManagerDebug.isFluidSimulationActive) return;
-		mouseCell.density += 100f;
+		mouseCell.density += 1f;
 		mouseCell.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * mouseCell.density;
 		mouseCell.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		foreach (Cell neighbor in mouseCell.neighborCells) {
-			neighbor.density += 100f;
+			neighbor.density += 1f;
 			neighbor.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * mouseCell.density;
 			neighbor.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		}

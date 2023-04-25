@@ -12,9 +12,7 @@ public class FluidSimulation
 	public float dt { get; private set; }
 	public float diffision { get; private set; }
 	public float viscosity { get; private set; }
-	
-	public int iterations = 10;
-	private Vector3 previousMousePos;
+	public int iterations = 20;
 	
 	public FluidSimulation(VectorField _vectorField, float _dt, float _diffision, float _viscosity) {
 		vectorField = _vectorField;

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1875611464}
-  m_IndirectSpecularColor: {r: 0.4366757, g: 0.48427194, b: 0.5645252, a: 1}
+  m_IndirectSpecularColor: {r: 0.43667546, g: 0.48427135, b: 0.5645225, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -691,8 +691,8 @@ MonoBehaviour:
   gridSize: {x: 80, y: 40}
   gridOffset: {x: 0, y: 0}
   cellRadius: 1
-  timeStep: 3
-  diffision: 70
+  timeStep: 0.5
+  diffision: 5
   viscosity: 15
 --- !u!4 &424040254
 Transform:
