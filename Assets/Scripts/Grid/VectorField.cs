@@ -50,13 +50,13 @@ public class VectorField
 		return nearestCellAtMousePosition;
 	}
 	
-	// gets a random non border cell via gridIndex and returns that cell's world position
+	// gets a random non border cell via gridIndex and returns that cell
 	public Cell GetRandomCellWithinTheGrid() {
 		int randomXIndex = Random.Range(1, gridSize.x - 1);
 		int randomYIndex = Random.Range(1, gridSize.y - 1);
 		return grid[randomXIndex, randomYIndex];
 	}
-	
+
 	// generates the grid where the 3 fields are being generated on
 	private void GenerateGrid() {
 		grid = new Cell[gridSize.x, gridSize.y];

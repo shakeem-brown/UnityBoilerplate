@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.Rendering.HighDefinition.ScalableSettingLevelParameter;
 
 public class GameManagerUI : MonoBehaviour
 {
@@ -17,9 +18,17 @@ public class GameManagerUI : MonoBehaviour
 	// Unit Count
     [HideInInspector] [SerializeField] private Text unitCountText;
 	private string unitCountIntro;
-	
-	// Buttons
-	[HideInInspector] [SerializeField] private Button gridButton;
+
+    // Score
+    [HideInInspector] [SerializeField] private Text scoreCountText;
+    private string scoreCountIntro;
+
+    // Level
+    [HideInInspector] [SerializeField] private Text levelCountText;
+    private string levelCountIntro;
+
+    // Buttons
+    [HideInInspector] [SerializeField] private Button gridButton;
 	[HideInInspector] [SerializeField] private Button flowFieldButton;
 	[HideInInspector] [SerializeField] private Button fluidSimulationButton;
 	
@@ -31,9 +40,11 @@ public class GameManagerUI : MonoBehaviour
 	
     private void Start() { 
 		fpsIntro = fpsText.text; 
-		unitCountIntro = unitCountText.text; 
-		
-		gridButton.onClick.AddListener(OnGridButtonClick);
+		unitCountIntro = unitCountText.text;
+        scoreCountIntro = scoreCountText.text;
+        levelCountIntro = levelCountText.text;
+
+        gridButton.onClick.AddListener(OnGridButtonClick);
 		flowFieldButton.onClick.AddListener(OnFlowFieldButtonClick);
 		fluidSimulationButton.onClick.AddListener(OnFluidSimulationButtonClick);
 		
@@ -62,16 +73,20 @@ public class GameManagerUI : MonoBehaviour
 			
 			// Unit Count
 			unitCountText.text = unitCountIntro + mGM.unitList.Count;
-			
+
+			// Score
+			scoreCountText.text = scoreCountIntro + mGM.score;
+
+			// Level
+            levelCountText.text = levelCountIntro + mGM.level;
+
             yield return new WaitForSeconds(0.2f);
         }
     }
 	
 	private float GetFPS() {
 		float totalFPS = 0f;
-		foreach (float deltaTime in frameDeltaTimeArray) {
-			totalFPS += deltaTime;
-		}
+		foreach (float deltaTime in frameDeltaTimeArray) totalFPS += deltaTime;
 		return frameDeltaTimeArray.Length / totalFPS;
 	}
 }
