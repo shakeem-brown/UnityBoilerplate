@@ -71,11 +71,11 @@ public class GridManager : MonoBehaviour
 	private void FluidSimulationMouseDrag(Cell mouseCell) {
 		if (mouseCell == null || !mGridManagerDebug.isFluidSimulationActive) return;
 		if (previousMousePos == Vector3.zero) previousMousePos = -mouseCell.worldPosition;
-		mouseCell.density += 1f;
+		mouseCell.density += Random.Range(0.5f, 1f);
 		mouseCell.velocity.x += (mouseCell.worldPosition.x - previousMousePos.x) * mouseCell.density;
 		mouseCell.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		foreach (Cell neighbor in mouseCell.neighborCells) {
-			neighbor.density = mouseCell.density;
+			neighbor.density += Random.Range(0.5f, 1f);
 			neighbor.velocity = mouseCell.velocity;
 		}
 		previousMousePos = mouseCell.worldPosition;

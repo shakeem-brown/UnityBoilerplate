@@ -60,8 +60,8 @@ public class GridManagerDebug : MonoBehaviour
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
 
 		// make the density fade
-		cell.density -= 0.025f;
-		cell.density = Mathf.Clamp01(cell.density);
+		cell.density -= 0.015f;
+		cell.density = Mathf.Clamp(cell.density, 0f, 1f);
 
 		if (cell.density == 0) cell.velocity = Vector2.zero;
 
