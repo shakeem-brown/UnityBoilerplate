@@ -76,7 +76,8 @@ public class GridManager : MonoBehaviour
 		mouseCell.velocity.y += (mouseCell.worldPosition.z - previousMousePos.z) * mouseCell.density;
 		foreach (Cell neighbor in mouseCell.neighborCells) {
 			neighbor.density += Random.Range(0.5f, 1f);
-			neighbor.velocity = mouseCell.velocity;
+			neighbor.velocity.x += (mouseCell.worldPosition.x - neighbor.worldPosition.x) * neighbor.density;
+			neighbor.velocity.y += (mouseCell.worldPosition.z - neighbor.worldPosition.z) * neighbor.density;
 		}
 		previousMousePos = mouseCell.worldPosition;
 	}
