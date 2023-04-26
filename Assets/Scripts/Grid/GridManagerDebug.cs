@@ -58,21 +58,14 @@ public class GridManagerDebug : MonoBehaviour
 	
 	private void VisualizeFluidSimulation(Cell cell) {
 		MeshRenderer meshRenderer = cell.cube.GetComponent<MeshRenderer>();
-		//Color diffusionColor = meshRenderer.material.GetColor("_Color");
-		float diffusionAlpha = meshRenderer.material.GetFloat("_Alpha");
-		
-		//diffusionColor.r = cell.density;
-		//diffusionColor.g = cell.density;
-		//diffusionColor.b = cell.density;
-		
+
 		// make the density fade
-		cell.density -= 0.01f;
-		cell.density = Mathf.Clamp(cell.density, 0, 1);
+		cell.density -= 0.025f;
+		cell.density = Mathf.Clamp01(cell.density);
 
 		if (cell.density == 0) cell.velocity = Vector2.zero;
 
-		// sets the mesh renderer's color
-		//meshRenderer.material.color = diffusionColor;
+		// sets the mesh renderer's alpha
 		meshRenderer.material.SetFloat("_Alpha", cell.density);
 
     }

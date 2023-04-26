@@ -29,8 +29,9 @@ public class FluidSimulation
 		DiffusePreviousVelocity(); // diffuse previous velocity
 		ProjectPreviousVelocity(); // project previous velocity
 		AdvectPreviousVelocity(); // advect previous velocity
+		
+		DiffusePreviousDensity(); // diffuse previous density
         ProjectVelocity(); // project velocity
-        DiffusePreviousDensity(); // diffuse previous density
 		AdvectPreviousDensity(); // advect previous density
     }
 
