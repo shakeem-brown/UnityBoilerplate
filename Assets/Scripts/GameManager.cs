@@ -136,7 +136,6 @@ public class GameManager : MonoBehaviour
 				int ranomdXIndex = Random.Range(5, 10);
 				int randomYIndex = Random.Range(ranomdXIndex, mGridManager.gridSize.y - 5);
                 unit.transform.position = mGridManager.vectorField.grid[5, randomYIndex].worldPosition;
-				unit.transform.localScale = Vector3.one * mGridManager.cellRadius;
 			}
 		}
 	}
