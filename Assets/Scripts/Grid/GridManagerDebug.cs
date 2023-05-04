@@ -47,7 +47,7 @@ public class GridManagerDebug : MonoBehaviour
 			if (mGridManager == null || vectorField == null || fluidSimulation == null) return;
 			if (fluidSimulation != mGridManager.fluidSimulation) return;
 
-            DrawVectorField();
+            //DrawVectorField();
 
             foreach (Cell currentCell in vectorField.grid) {
 				if (mCubeHolder.childCount < vectorField.grid.Length) DrawCube(currentCell);
